@@ -52,19 +52,24 @@ export default function LoginPage() {
  
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <Card className='w-full max-w-sm shadow-2xl border-slate-700 bg-slate-800/90 backdrop-blur'>
+    <Card className='w-full max-w-sm shadow-2xl border-slate-700 bg-slate-800/90 backdrop-blur mx-4'>
  
       <CardHeader className='space-y-3 pb-4'>
-        <div className='flex items-center gap-3'>
-          <div className='w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center'>
+        {/* FIXED MOBILE HEADER LAYOUT */}
+        <div className='flex items-center gap-3 overflow-hidden'>
+          <div className='w-10 h-10 shrink-0 rounded-xl bg-blue-600 flex items-center justify-center'>
             <Building2 className='w-6 h-6 text-white' />
           </div>
-          <div>
-            <p className='text-xs text-slate-400 uppercase tracking-widest'>Welcome to</p>
-            <p className='text-white font-bold text-lg leading-none'>HostelPayHub</p>
+          <div className='min-w-0'>
+            <p className='text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest truncate'>
+              Welcome to
+            </p>
+            <p className='text-white font-bold text-base sm:text-lg leading-none truncate mt-1'>
+              HostelPayHub
+            </p>
           </div>
         </div>
-        <CardTitle className='text-white text-xl'>Owner Login</CardTitle>
+        <CardTitle className='text-white text-xl mt-2'>Owner Login</CardTitle>
         <CardDescription className='text-slate-400 text-sm'>
           Enter the credentials provided by your administrator.
         </CardDescription>

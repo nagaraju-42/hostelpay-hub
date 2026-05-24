@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SpeedInsights } from "@vercel/speed-insights/next"
+
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className='min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900

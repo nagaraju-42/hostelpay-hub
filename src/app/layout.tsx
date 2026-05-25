@@ -25,9 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-<<<<<<< HEAD
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full flex flex-col`}>
         {/* Your app's content */}
         {children}
         
@@ -35,14 +34,6 @@ export default function RootLayout({
         <Toaster richColors position="top-center" />
         
         {/* Vercel Speed Insights */}
-=======
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        {children}
->>>>>>> 51dd3a52c59b1496c775621f87eab5f5ec5050e4
         <SpeedInsights />
       </body>
     </html>

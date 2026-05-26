@@ -31,7 +31,8 @@ export function Navbar({ hostelName }: NavbarProps) {
           </div>
           <div className='leading-none'>
             <p className='text-[10px] text-slate-400 uppercase tracking-wider'>HostelPayHub</p>
-            <p className='text-sm font-semibold text-slate-800 truncate max-w-[160px]'>{hostelName}</p>
+            {/* <p className='text-sm font-semibold text-slate-800 truncate max-w-[160px]'>{hostelName}</p> */}
+            <p className='text-sm font-semibold text-slate-800 truncate max-w-[90px] sm:max-w-[160px]'>{hostelName}</p>
           </div>
         </Link>
  

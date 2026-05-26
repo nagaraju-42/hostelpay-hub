@@ -105,10 +105,11 @@ export default function ExportPage() {
               className='w-full h-11 rounded-lg border border-slate-200 px-3 text-slate-700
                          focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white' />
           </div>
-          <Button onClick={fetchExportData} disabled={loading}
+          {/* <Button onClick={fetchExportData} disabled={loading}
             className='h-11 bg-blue-600 hover:bg-blue-500 gap-2'>
             {loading ? <><Loader2 className='w-4 h-4 animate-spin'/>Loading...</> : 'Load Report'}
-          </Button>
+          </Button> */}
+          <Button onClick={fetchExportData} disabled={loading} className='w-full sm:w-auto h-11 bg-blue-600 hover:bg-blue-500 gap-2'></Button>
         </div>
       </div>
  

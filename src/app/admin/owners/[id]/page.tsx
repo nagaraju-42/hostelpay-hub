@@ -42,7 +42,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
           </div>
           <ResetLinkButton email={authUser?.email || ''} />
         </div>
-        <div className='grid grid-cols-3 gap-3 mt-4'>
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4'>
           <Stat label='Phone'    value={owner.phone} />
           <Stat label='Hostel OTP' value={owner.hostel_otp || '—'} mono />
           <Stat label='Students' value={String((students||[]).filter(s=>s.is_active).length)} />

@@ -25,7 +25,16 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false))
   }, [])
  
-  if (loading) return <div className="text-slate-400 p-8 text-center animate-pulse">Loading Super Admin Data...</div>
+if (loading) {
+    return (
+      <div className="fixed inset-0 bg-slate-50/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div className="bg-white p-6 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="mt-4 text-sm font-semibold text-slate-600 animate-pulse">Loading data...</p>
+        </div>
+      </div>
+    )
+  }
   
   if (error) return (
     <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-xl text-center">
@@ -70,7 +79,8 @@ export default function AdminDashboardPage() {
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-4 sm:gap-6 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                {/* <div className="flex items-center gap-4 sm:gap-6 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50"> */}
+                <div className="flex flex-wrap items-center justify-between sm:justify-start gap-4 sm:gap-6 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 w-full sm:w-auto mt-3 sm:mt-0">
                   <div>
                     <div className="flex items-center gap-1.5 text-slate-400 text-xs mb-1"><Users className="w-3.5 h-3.5" /> Students</div>
                     <p className="text-white font-bold text-lg">{students}</p>

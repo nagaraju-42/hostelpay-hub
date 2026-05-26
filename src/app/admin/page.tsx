@@ -11,7 +11,6 @@ export default function AdminDashboardPage() {
   const [owners, setOwners] = useState<OwnerWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  
   const [dialogOpen, setDialogOpen] = useState(false)
  
   useEffect(() => {
@@ -25,12 +24,12 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false))
   }, [])
  
-if (loading) {
+  if (loading) {
     return (
-      <div className="fixed inset-0 bg-slate-50/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-        <div className="bg-white p-6 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center">
-          <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
-          <p className="mt-4 text-sm font-semibold text-slate-600 animate-pulse">Loading data...</p>
+      <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex flex-col items-center">
+          <div className="w-10 h-10 border-4 border-slate-600 border-t-purple-500 rounded-full animate-spin"></div>
+          <p className="mt-4 text-sm font-semibold text-slate-300 animate-pulse">Loading Platform Data...</p>
         </div>
       </div>
     )
@@ -51,7 +50,7 @@ if (loading) {
           <p className="text-slate-400 text-sm mt-1">Manage all registered hostel owners.</p>
         </div>
         
-        <Button onClick={() => setDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white gap-2">
+        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white gap-2">
           <Plus className="w-4 h-4" /> Add New Owner
         </Button>
       </div>
@@ -66,39 +65,42 @@ if (loading) {
           owners.map(owner => {
             const revenue = owner.monthly_revenue || 0;
             const students = owner.student_count || 0;
-
+ 
             return (
-              <div key={owner.id} className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:border-slate-600 transition-colors">
-                <div>
+              <div key={owner.id} className="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:border-slate-600 transition-colors relative">
+                
+                {/* Info Section */}
+                <div className="pr-10 lg:pr-0">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-purple-400" />
-                    {owner.hostel_name}
+                    <Building2 className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                    <span className="truncate">{owner.hostel_name}</span>
                   </h3>
-                  <p className="text-slate-400 text-sm mt-1">
-                    {owner.full_name} · {owner.phone} · <span className="font-mono text-slate-500">{owner.email}</span>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-1 truncate">
+                    {owner.full_name} · {owner.phone}
                   </p>
+                  <p className="font-mono text-slate-500 text-xs sm:text-sm truncate mt-0.5">{owner.email}</p>
                 </div>
                 
-                {/* <div className="flex items-center gap-4 sm:gap-6 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50"> */}
-                <div className="flex flex-wrap items-center justify-between sm:justify-start gap-4 sm:gap-6 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 w-full sm:w-auto mt-3 sm:mt-0">
-                  <div>
+                {/* Stats Section */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-6 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                  <div className="flex-1 sm:flex-none">
                     <div className="flex items-center gap-1.5 text-slate-400 text-xs mb-1"><Users className="w-3.5 h-3.5" /> Students</div>
-                    <p className="text-white font-bold text-lg">{students}</p>
+                    <p className="text-white font-bold text-base sm:text-lg">{students}</p>
                   </div>
-                  <div className="w-px h-8 bg-slate-700"></div>
-                  <div>
+                  <div className="w-px h-8 bg-slate-700 hidden sm:block"></div>
+                  <div className="flex-1 sm:flex-none">
                     <div className="flex items-center gap-1.5 text-slate-400 text-xs mb-1"><IndianRupee className="w-3.5 h-3.5" /> Revenue</div>
-                    <p className="text-green-400 font-bold text-lg">₹{revenue.toLocaleString('en-IN')}</p>
+                    <p className="text-green-400 font-bold text-base sm:text-lg">₹{revenue.toLocaleString('en-IN')}</p>
                   </div>
-                  <div className="w-px h-8 bg-slate-700"></div>
-                  
-                  {/* ── NEW VIEW DETAILS BUTTON ── */}
-                  <Link href={`/admin/owners/${owner.id}`}>
-                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white px-2">
-                      <ExternalLink className="w-5 h-5" />
-                    </Button>
-                  </Link>
                 </div>
+ 
+                {/* View Details Button - Positioned absolute on mobile top-right, flow on desktop */}
+                <Link href={`/admin/owners/${owner.id}`} className="absolute top-4 right-4 lg:relative lg:top-0 lg:right-0">
+                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white px-2 lg:bg-slate-700 lg:hover:bg-slate-600">
+                    <ExternalLink className="w-5 h-5 lg:w-4 lg:h-4" />
+                    <span className="hidden lg:inline ml-2">View</span>
+                  </Button>
+                </Link>
               </div>
             )
           })

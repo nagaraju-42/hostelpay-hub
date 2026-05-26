@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Building2, LogOut, Users } from 'lucide-react'
+import { Building2, LogOut, Users, Download } from 'lucide-react'
 import Link from 'next/link'
  
 interface NavbarProps {
@@ -36,17 +36,29 @@ export function Navbar({ hostelName }: NavbarProps) {
         </Link>
  
         {/* Nav Links + Logout */}
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-1 sm:gap-2'>
+          
           <Link href='/dashboard/students'>
-            <Button variant='ghost' size='sm' className='hidden sm:flex gap-1.5 text-slate-600'>
+            <Button variant='ghost' size='sm' className='hidden sm:flex gap-1.5 text-slate-600 hover:text-slate-900'>
               <Users className='w-4 h-4' /> Students
             </Button>
           </Link>
+
+          {/* ── NEW EXPORT BUTTON ── */}
+          <Link href='/dashboard/export'>
+            <Button variant='ghost' size='sm' className='hidden sm:flex gap-1.5 text-slate-600 hover:text-slate-900'>
+              <Download className='w-4 h-4' /> Export
+            </Button>
+          </Link>
+          
+          <div className='w-px h-5 bg-slate-200 hidden sm:block mx-1'></div>
+
           <Button variant='ghost' size='sm' onClick={handleLogout}
             className='text-slate-500 hover:text-red-600 hover:bg-red-50'>
             <LogOut className='w-4 h-4' />
             <span className='hidden sm:inline ml-1.5'>Logout</span>
           </Button>
+
         </div>
       </div>
     </nav>

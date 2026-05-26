@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
  
   const { data: existingPayments } = await supabase
     .from('payments')
-    .select('id, paid_at')
+    // .select('id, paid_at')
+    .select('*')
     .eq('student_id', body.student_id)
     .gte('paid_at', thirtyTwoDaysAgo.toISOString())
  

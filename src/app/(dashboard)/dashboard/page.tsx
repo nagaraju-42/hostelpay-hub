@@ -10,7 +10,7 @@ import { OverdueBanner } from '@/components/payments/OverdueBanner'
 import { DueTodayCard } from '@/components/payments/DueTodayCard'
 import type { DueTodayStudent } from '@/app/api/payments/due-today/route'
 import type { Payment } from '@/types'
- 
+ export const dynamic = 'force-dynamic'
 export default function DashboardPage() {
   // ── State ──────────────────────────────────────────────────────────────
   const [dueToday,  setDueToday]  = useState<DueTodayStudent[]>([])

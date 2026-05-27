@@ -1,5 +1,5 @@
 'use client'
- 
+
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Student } from '@/types'
- 
+
 const editSchema = z.object({
   full_name:        z.string().min(2, 'Full name must be at least 2 characters.'),
   phone:            z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number.'),
@@ -22,19 +22,22 @@ const editSchema = z.object({
   monthly_due_day:  z.string().refine(v => { const n = parseInt(v); return !isNaN(n) && n >= 1 && n <= 28 }, 'Must be 1-28.'),
   rent_amount:      z.string().refine(v => { const n = parseFloat(v); return !isNaN(n) && n > 0 }, 'Must be positive.'),
 })
- 
+
 type EditFormValues = z.infer<typeof editSchema>
- 
+
 interface EditStudentSheetProps {
   student: Student
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
 }
- 
+
+// ── Sahara EditStudentSheet ───────────────────────────────────────────
+// Same warm palette as AddStudentSheet — consistent within the design system
+
 export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: EditStudentSheetProps) {
   const [submitting, setSubmitting] = useState(false)
- 
+
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
     values: {  // 'values' keeps form in sync when student prop changes
@@ -48,7 +51,7 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
       rent_amount:     student.rent_amount.toString(),
     }
   })
- 
+
   async function onSubmit(values: EditFormValues) {
     setSubmitting(true)
     try {
@@ -64,64 +67,100 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
     } catch { toast.error('Network error.') }
     finally { setSubmitting(false) }
   }
- 
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full sm:max-w-md overflow-y-auto'>
+      <SheetContent
+        side='right'
+        className='w-full sm:max-w-md overflow-y-auto bg-[#fffcf8] border-l border-[rgba(216,208,200,0.70)]'
+      >
         <SheetHeader className='mb-6'>
-          <SheetTitle>Edit Student</SheetTitle>
-          <SheetDescription>Update {student.full_name}&apos;s details.</SheetDescription>
+          <SheetTitle className='font-heading text-xl text-[#2c1f14]'>Edit Student</SheetTitle>
+          <SheetDescription className='font-sans text-[#8a7060] text-sm'>
+            Update {student.full_name}&apos;s details.
+          </SheetDescription>
         </SheetHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+
             <FormField control={form.control} name='full_name' render={({ field }) => (
-              <FormItem><FormLabel>Full Name *</FormLabel>
-                <FormControl><Input {...field} className='h-11' /></FormControl>
-                <FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel className='text-[#5c3d2a] font-sans'>Full Name *</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+              </FormItem>
             )} />
+
             <div className='grid grid-cols-2 gap-3'>
               <FormField control={form.control} name='room_number' render={({ field }) => (
-                <FormItem><FormLabel>Room No. *</FormLabel>
-                  <FormControl><Input {...field} className='h-11' /></FormControl>
-                  <FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Room No. *</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+                </FormItem>
               )} />
               <FormField control={form.control} name='age' render={({ field }) => (
-                <FormItem><FormLabel>Age</FormLabel>
-                  <FormControl><Input type='number' {...field} className='h-11' /></FormControl>
-                  <FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Age</FormLabel>
+                  <FormControl><Input type='number' {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+                </FormItem>
               )} />
             </div>
+
             <FormField control={form.control} name='phone' render={({ field }) => (
-              <FormItem><FormLabel>Mobile *</FormLabel>
-                <FormControl><Input type='tel' {...field} className='h-11' /></FormControl>
-                <FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel className='text-[#5c3d2a] font-sans'>Mobile *</FormLabel>
+                <FormControl><Input type='tel' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+              </FormItem>
             )} />
+
             <FormField control={form.control} name='parent_phone' render={({ field }) => (
-              <FormItem><FormLabel>Parent Mobile</FormLabel>
-                <FormControl><Input type='tel' {...field} className='h-11' /></FormControl>
-                <FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel className='text-[#5c3d2a] font-sans'>Parent Mobile</FormLabel>
+                <FormControl><Input type='tel' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+              </FormItem>
             )} />
+
             <div className='grid grid-cols-2 gap-3'>
               <FormField control={form.control} name='monthly_due_day' render={({ field }) => (
-                <FormItem><FormLabel>Due Day (1-28) *</FormLabel>
-                  <FormControl><Input type='number' min={1} max={28} {...field} className='h-11' /></FormControl>
-                  <FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Due Day (1-28) *</FormLabel>
+                  <FormControl><Input type='number' min={1} max={28} {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+                </FormItem>
               )} />
               <FormField control={form.control} name='rent_amount' render={({ field }) => (
-                <FormItem><FormLabel>Rent (₹) *</FormLabel>
-                  <FormControl><Input type='number' {...field} className='h-11' /></FormControl>
-                  <FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Rent (₹) *</FormLabel>
+                  <FormControl><Input type='number' {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+                </FormItem>
               )} />
             </div>
+
             <FormField control={form.control} name='address' render={({ field }) => (
-              <FormItem><FormLabel>Address</FormLabel>
-                <FormControl><Input {...field} className='h-11' /></FormControl>
-                <FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel className='text-[#5c3d2a] font-sans'>Address</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
+              </FormItem>
             )} />
-            <Button type='submit' disabled={submitting}
-              className='w-full h-12 bg-blue-600 hover:bg-blue-500 font-semibold mt-2'>
-              {submitting ? <><Loader2 className='w-4 h-4 mr-2 animate-spin' />Saving...</> : 'Save Changes'}
+
+            <Button
+              type='submit'
+              disabled={submitting}
+              size='lg'
+              className='w-full font-semibold mt-2'
+            >
+              {submitting
+                ? <><Loader2 className='w-4 h-4 mr-2 animate-spin' />Saving...</>
+                : 'Save Changes'}
             </Button>
+
           </form>
         </Form>
       </SheetContent>

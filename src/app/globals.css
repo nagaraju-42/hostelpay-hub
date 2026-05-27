@@ -4,127 +4,244 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Sahara Design Tokens ────────────────────────────────────────────── */
+/* This file is the single source of truth for all Tailwind v4 theming.  */
+/* NO tailwind.config.ts exists — all config lives here via @theme.       */
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
+  /* Font stacks */
+  --font-sans:    var(--font-manrope);
+  --font-mono:    var(--font-geist-mono);
+  --font-heading: var(--font-garamond);
+  --font-serif:   var(--font-garamond);
+
+  /* Sahara color palette — every token is warm-shifted */
+  --color-background:   var(--background);
+  --color-foreground:   var(--foreground);
+
+  /* Semantic roles */
+  --color-card:                   var(--card);
+  --color-card-foreground:        var(--card-foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary:                var(--primary);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
+  --color-border:                 var(--border);
+  --color-input:                  var(--input);
+  --color-ring:                   var(--ring);
+
+  /* Sidebar (matches warm surface) */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* Chart tokens (warm tones) */
   --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Border radius — base unit = 8px (Sahara spec) */
+  --radius-sm:  calc(var(--radius) * 0.5);   /* 4px  */
+  --radius-md:  calc(var(--radius) * 0.75);  /* 6px  */
+  --radius-lg:  var(--radius);               /* 8px  */
+  --radius-xl:  calc(var(--radius) * 1.5);   /* 12px */
+  --radius-2xl: calc(var(--radius) * 2);     /* 16px */
+  --radius-3xl: calc(var(--radius) * 2.5);   /* 20px */
+  --radius-4xl: calc(var(--radius) * 3);     /* 24px */
+
+  /* Sahara custom shadow token */
+  --shadow-sahara: 0 2px 16px rgba(58, 48, 42, 0.04);
+  --shadow-sahara-md: 0 4px 24px rgba(58, 48, 42, 0.07);
+  --shadow-sahara-lg: 0 8px 40px rgba(58, 48, 42, 0.10);
 }
 
+/* ── Light (Sahara) Theme ────────────────────────────────────────────── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* === SAHARA PALETTE === */
+  /* Background: Warm linen — never cold white */
+  --background:         #faf5ee;
+  /* Foreground: Rich dark brown (not black) */
+  --foreground:         #2c1f14;
+
+  /* Card: Slightly brighter warm white */
+  --card:               #fffcf8;
+  --card-foreground:    #2c1f14;
+
+  /* Popover: Same as card */
+  --popover:            #fffcf8;
+  --popover-foreground: #2c1f14;
+
+  /* Primary: Burnt Sienna (#c2652a) */
+  --primary:            #c2652a;
+  --primary-foreground: #fffcf8;
+
+  /* Secondary: Warm sand (hover/chip surfaces) */
+  --secondary:          #f0e8db;
+  --secondary-foreground: #5c3d2a;
+
+  /* Muted: Parchment wash */
+  --muted:              #ede4d6;
+  --muted-foreground:   #8a7060;
+
+  /* Accent: Dusty rose (#8c3c3c) */
+  --accent:             #f5ede4;
+  --accent-foreground:  #8c3c3c;
+
+  /* Destructive: Muted earthy red */
+  --destructive:        #b04040;
+
+  /* Border: Warm tinted at 60% opacity equivalent */
+  --border:             #d8d0c8;
+  --input:              #d8d0c8;
+
+  /* Ring: Sienna focus ring */
+  --ring:               #c2652a;
+
+  /* Chart: Warm earthy palette */
+  --chart-1:  #c2652a;
+  --chart-2:  #8c3c3c;
+  --chart-3:  #b07850;
+  --chart-4:  #d4a574;
+  --chart-5:  #e8c9a0;
+
+  /* Radius base = 8px */
+  --radius: 0.5rem;
+
+  /* Sidebar: Warm white surface */
+  --sidebar:                    #f5ede2;
+  --sidebar-foreground:         #2c1f14;
+  --sidebar-primary:            #c2652a;
+  --sidebar-primary-foreground: #fffcf8;
+  --sidebar-accent:             #ede4d6;
+  --sidebar-accent-foreground:  #5c3d2a;
+  --sidebar-border:             #d8d0c8;
+  --sidebar-ring:               #c2652a;
 }
 
+/* ── Dark mode intentionally matches Sahara warm tones (not cold dark) ─ */
+/* This app is light-mode only by design (mobile hostel app, outdoors use) */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background:         #2c1f14;
+  --foreground:         #f5ede2;
+  --card:               #3a2819;
+  --card-foreground:    #f5ede2;
+  --popover:            #3a2819;
+  --popover-foreground: #f5ede2;
+  --primary:            #d4804a;
+  --primary-foreground: #1e1108;
+  --secondary:          #4a3020;
+  --secondary-foreground: #e8d5c0;
+  --muted:              #4a3020;
+  --muted-foreground:   #a0887a;
+  --accent:             #5a2e2e;
+  --accent-foreground:  #e8bfbf;
+  --destructive:        #c05050;
+  --border:             rgba(216, 208, 200, 0.15);
+  --input:              rgba(216, 208, 200, 0.20);
+  --ring:               #d4804a;
+  --chart-1:  #d4804a;
+  --chart-2:  #a85050;
+  --chart-3:  #c89060;
+  --chart-4:  #e0b080;
+  --chart-5:  #f0d0a0;
+  --sidebar:                    #3a2819;
+  --sidebar-foreground:         #f5ede2;
+  --sidebar-primary:            #d4804a;
+  --sidebar-primary-foreground: #1e1108;
+  --sidebar-accent:             #4a3020;
+  --sidebar-accent-foreground:  #e8d5c0;
+  --sidebar-border:             rgba(216, 208, 200, 0.15);
+  --sidebar-ring:               #d4804a;
 }
 
+/* ── Global Base Styles ──────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    /* Sahara ultra-soft shadow as default box-shadow for elevated surfaces */
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  /* Editorial headings via EB Garamond */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-garamond), Georgia, 'Times New Roman', serif;
+    font-feature-settings: 'kern', 'liga', 'clig';
+    letter-spacing: -0.01em;
+  }
+
+  /* Minimum tap target enforcement (WCAG / mobile-first) */
+  button, [role="button"], a, input, select, textarea {
+    min-height: unset; /* let components control their own height */
+  }
+}
+
+/* ── Sahara Utility Classes ──────────────────────────────────────────── */
+@layer utilities {
+  /* Sahara card shadow */
+  .shadow-sahara {
+    box-shadow: 0 2px 16px rgba(58, 48, 42, 0.04);
+  }
+  .shadow-sahara-md {
+    box-shadow: 0 4px 24px rgba(58, 48, 42, 0.07);
+  }
+  .shadow-sahara-lg {
+    box-shadow: 0 8px 40px rgba(58, 48, 42, 0.10);
+  }
+
+  /* Warm border shorthand (Sahara spec: #d8d0c8 at 60%) */
+  .border-sahara {
+    border-color: rgba(216, 208, 200, 0.60);
+  }
+
+  /* Sienna text / bg utilities */
+  .text-sienna      { color: #c2652a; }
+  .bg-sienna        { background-color: #c2652a; }
+  .text-sienna-dark { color: #a0541f; }
+
+  /* Earthy muted status — replaces harsh green/red */
+  .bg-paid    { background-color: #e8f0e0; }   /* sage green */
+  .text-paid  { color: #4a6b3a; }
+  .bg-overdue { background-color: #f0e4d8; }   /* warm terracotta */
+  .text-overdue { color: #8c4a2a; }
+  .bg-due     { background-color: #fdf4e8; }   /* warm amber */
+  .text-due   { color: #7a5020; }
+
+  /* Skeleton animation with warm tones */
+  .skeleton-warm {
+    background: linear-gradient(
+      90deg,
+      #ede4d6 25%,
+      #e8ddd0 50%,
+      #ede4d6 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-warm 1.5s infinite;
+  }
+
+  @keyframes shimmer-warm {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }

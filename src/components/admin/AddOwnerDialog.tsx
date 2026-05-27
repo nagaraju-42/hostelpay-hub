@@ -5,7 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Copy, CheckCheck } from 'lucide-react'
+import { PageLoader } from '@/components/ui/PageLoader'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Copy, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import type { OwnerWithStats } from '@/app/api/admin/owners/route'
  
@@ -64,27 +66,29 @@ export function AddOwnerDialog({ open, onOpenChange, onSuccess }: AddOwnerDialog
   }
  
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='max-w-md bg-slate-800 border-slate-700 text-white'>
-        <DialogHeader>
-          <DialogTitle className='text-white'>Add Hostel Owner</DialogTitle>
-          <DialogDescription className='text-slate-400'>
-            Creates a Supabase auth account + hostel profile in one step.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      {loading && <PageLoader label='Creating Owner...' />}
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className='max-w-md bg-[#fffcf8] border-[rgba(216,208,200,0.70)] shadow-[0_8px_40px_rgba(58,48,42,0.12)] rounded-2xl'>
+          <DialogHeader>
+            <DialogTitle className='text-[#2c1f14] font-heading text-lg'>Add Hostel Owner</DialogTitle>
+            <DialogDescription className='text-[#8a7060] font-sans'>
+              Creates a Supabase auth account + hostel profile in one step.
+            </DialogDescription>
+          </DialogHeader>
  
         {result ? (
           // Success state — show credentials to copy
           <div className='space-y-4'>
-            <div className='bg-green-950 border border-green-800 rounded-xl p-4'>
-              <p className='text-green-400 font-semibold text-sm mb-2'>✅ Owner Created!</p>
-              <p className='text-slate-300 text-xs font-mono whitespace-pre-wrap'>{result.message}</p>
+            <div className='bg-[#e8f0e0] border border-[#c8deb8] rounded-xl p-4'>
+              <p className='text-[#4a6b3a] font-semibold text-sm mb-2 font-sans'>✅ Owner Created!</p>
+              <p className='text-[#2c1f14] text-xs font-mono whitespace-pre-wrap'>{result.message}</p>
             </div>
-            <Button onClick={copyCredentials} className='w-full gap-2 bg-slate-700 hover:bg-slate-600'>
+            <Button onClick={copyCredentials} className='w-full gap-2 bg-[#c2652a] hover:bg-[#a35220]'>
               {copied ? <><CheckCheck className='w-4 h-4' />Copied!</> : <><Copy className='w-4 h-4' />Copy Credentials</>}
             </Button>
-            <p className='text-slate-400 text-xs text-center'>Send these credentials to the owner via WhatsApp.</p>
-            <Button variant='outline' onClick={() => handleClose(false)} className='w-full border-slate-600 text-slate-300'>
+            <p className='text-[#8a7060] text-xs text-center font-sans'>Send these credentials to the owner via WhatsApp.</p>
+            <Button variant='outline' onClick={() => handleClose(false)} className='w-full'>
               Done
             </Button>
           </div>
@@ -98,23 +102,23 @@ export function AddOwnerDialog({ open, onOpenChange, onSuccess }: AddOwnerDialog
               { key: 'email',        label: 'Email Address',      placeholder: 'owner@hostel.in' },
             ].map(f => (
               <div key={f.key} className='space-y-1'>
-                <Label className='text-slate-300 text-sm'>{f.label}</Label>
+                <Label className='text-[#5c3d2a] text-sm font-sans'>{f.label}</Label>
                 <Input value={form[f.key as keyof typeof form]}
                   onChange={set(f.key as keyof typeof form)}
                   placeholder={f.placeholder}
-                  className='bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 h-10' />
+                  className='h-11 bg-white' />
               </div>
             ))}
  
             <div className='space-y-1'>
-              <Label className='text-slate-300 text-sm'>Temporary Password</Label>
+              <Label className='text-[#5c3d2a] text-sm font-sans'>Temporary Password</Label>
               <div className='flex gap-2'>
                 <Input value={form.temp_password}
                   onChange={set('temp_password')}
                   placeholder='Hostel@1234'
-                  className='bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 h-10 flex-1' />
+                  className='h-11 bg-white flex-1' />
                 <Button type='button' variant='outline' onClick={generatePassword}
-                  className='border-slate-600 text-slate-300 hover:text-white h-10 text-xs px-3'>
+                  className='h-11 text-xs px-4'>
                   Auto
                 </Button>
               </div>
@@ -122,15 +126,16 @@ export function AddOwnerDialog({ open, onOpenChange, onSuccess }: AddOwnerDialog
  
             <div className='flex gap-3 pt-2'>
               <Button variant='outline' onClick={() => handleClose(false)}
-                className='flex-1 border-slate-600 text-slate-300 h-11'>Cancel</Button>
+                className='flex-1 h-11' disabled={loading}>Cancel</Button>
               <Button onClick={handleSubmit} disabled={loading}
-                className='flex-1 bg-purple-600 hover:bg-purple-500 h-11 font-semibold'>
-                {loading ? <><Loader2 className='w-4 h-4 mr-2 animate-spin'/>Creating...</> : 'Create Owner'}
+                className='flex-1 h-11 font-semibold'>
+                {loading ? <><LoadingSpinner size='sm' /><span className='ml-2'>Creating...</span></> : 'Create Owner'}
               </Button>
             </div>
           </div>
         )}
       </DialogContent>
     </Dialog>
+    </>
   )
 }

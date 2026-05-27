@@ -2,8 +2,10 @@
  
 import { useState } from 'react'
 import { CSVLink } from 'react-csv'
-import { FileSpreadsheet, FileText, Loader2, AlertCircle } from 'lucide-react'
+import { FileSpreadsheet, FileText, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageLoader } from '@/components/ui/PageLoader'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import type { ExportData } from '@/app/api/export/payments/route'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -13,6 +15,7 @@ export default function ExportPage() {
   const [month,       setMonth]       = useState(currentMonth)
   const [data,        setData]        = useState<ExportData | null>(null)
   const [loading,     setLoading]     = useState(false)
+  const [generating,  setGenerating]  = useState(false)
   const [error,       setError]       = useState('')
  
   async function fetchExportData() {
@@ -28,6 +31,7 @@ export default function ExportPage() {
  
   function downloadPDF() {
     if (!data) return
+    setGenerating(true)
     const doc = new jsPDF()
     doc.setFontSize(18)
     doc.setTextColor(30, 41, 59)
@@ -60,6 +64,9 @@ export default function ExportPage() {
     })
  
     doc.save(`${data.hostel_name}-${data.month}-Report.pdf`)
+    
+    // Simulate generation time for UX feedback on large lists
+    setTimeout(() => setGenerating(false), 500)
   }
  
   const csvHeaders = [
@@ -80,13 +87,8 @@ export default function ExportPage() {
   return (
     <div className='space-y-6 max-w-4xl mx-auto pb-10'>
       {/* Full screen loader overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-slate-50/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-          <div className="bg-white p-6 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-sm font-semibold text-slate-600 animate-pulse">Generating Report...</p>
-          </div>
-        </div>
+      {(loading || generating) && (
+        <PageLoader label={generating ? 'Generating PDF...' : 'Loading Report...'} />
       )}
  
       <div className='px-1 sm:px-0'>
@@ -135,8 +137,8 @@ export default function ExportPage() {
                   <FileSpreadsheet className='w-4 h-4' />
                   CSV
                 </CSVLink>
-                <Button onClick={downloadPDF} className='flex-1 sm:flex-none h-10 bg-red-600 hover:bg-red-500 gap-2 text-sm shadow-sm'>
-                  <FileText className='w-4 h-4'/>
+                <Button onClick={downloadPDF} disabled={generating} className='flex-1 sm:flex-none h-10 bg-[#c2652a] hover:bg-[#a35220] gap-2 text-sm shadow-sm'>
+                  {generating ? <LoadingSpinner size='sm' /> : <FileText className='w-4 h-4'/>}
                   PDF
                 </Button>
               </div>
@@ -144,9 +146,9 @@ export default function ExportPage() {
  
             <div className='grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3'>
               <StatBox label='Total Students' value={String(data.summary.total_students)} />
-              <StatBox label='Paid'    value={String(data.summary.paid_count)}    color='text-green-600' />
-              <StatBox label='Unpaid'  value={String(data.summary.unpaid_count)}  color='text-red-600' />
-              <StatBox label='Collected' value={`₹${data.summary.total_collected.toLocaleString('en-IN')}`} color='text-blue-600' />
+              <StatBox label='Paid'    value={String(data.summary.paid_count)}    color='text-[#4a6b3a]' />
+              <StatBox label='Unpaid'  value={String(data.summary.unpaid_count)}  color='text-[#8c4a2a]' />
+              <StatBox label='Collected' value={`₹${data.summary.total_collected.toLocaleString('en-IN')}`} color='text-[#3a4a8c]' />
             </div>
           </div>
  

@@ -1,28 +1,33 @@
 import type { ReactNode } from 'react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
- 
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
- 
+
   // SECURITY: Only the Super Admin email can access /admin routes
   if (!user || user.email !== process.env.SUPER_ADMIN_EMAIL) {
     redirect('/login')
   }
- 
+
   return (
-    <div className='min-h-screen bg-slate-900'>
-      <nav className='bg-slate-800 border-b border-slate-700'>
+    // ── Sahara Admin Shell ─────────────────────────────────────────
+    // Admin uses a deeper warm tone — still earthy, slightly more formal
+    <div className='min-h-screen bg-[#2c1f14]'>
+      <nav className='bg-[#3a2819] border-b border-[rgba(216,208,200,0.10)]'>
         <div className='max-w-6xl mx-auto px-4 h-14 flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
-            <div className='w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center'>
-              <span className='text-white text-xs font-bold'>SA</span>
+          <div className='flex items-center gap-2.5'>
+            {/* SA badge: sienna */}
+            <div className='w-8 h-8 rounded-lg bg-[#c2652a] flex items-center justify-center'>
+              <span className='text-[#fffcf8] text-xs font-bold font-sans'>SA</span>
             </div>
-            <span className='text-white font-semibold text-sm'>HostelPayHub Admin</span>
-            <span className='text-slate-500 text-xs ml-2'>Super Admin Panel</span>
+            <div>
+              <span className='text-[#f5ede2] font-sans font-semibold text-sm'>HostelPayHub</span>
+              <span className='text-[#8a7060] text-xs ml-2 font-sans'>Super Admin</span>
+            </div>
           </div>
-          <span className='text-slate-400 text-xs'>{user.email}</span>
+          <span className='text-[#8a7060] text-xs font-sans'>{user.email}</span>
         </div>
       </nav>
       <main className='max-w-6xl mx-auto px-4 py-6'>{children}</main>

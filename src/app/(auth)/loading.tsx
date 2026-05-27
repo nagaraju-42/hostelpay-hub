@@ -1,14 +1,12 @@
-import { Loader2 } from 'lucide-react'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+
+// ── Sahara Auth Loading ───────────────────────────────────────────────
+// Shows while the auth layout's server-side session check runs
 
 export default function AuthLoading() {
   return (
-    <div className="flex flex-col items-center justify-center space-y-4">
-      {/* The spinner */}
-      <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-      {/* The text */}
-      <p className="text-slate-400 text-sm font-medium animate-pulse">
-        Waking up server...
-      </p>
+    <div className='flex flex-col items-center justify-center min-h-[50vh] gap-3'>
+      <LoadingSpinner size='lg' label='Checking session...' />
     </div>
   )
 }

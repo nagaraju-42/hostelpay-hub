@@ -10,6 +10,10 @@ const withPWA = require('next-pwa')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Silence Turbopack/webpack conflict: next-pwa adds webpack config,
+  // but it's disabled in development. This empty turbopack config
+  // tells Next.js 16 we're aware and intentional.
+  turbopack: {},
   images: {
     formats: ['image/avif', 'image/webp'],
   },

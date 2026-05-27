@@ -1,5 +1,5 @@
 'use client'
- 
+
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
- 
+
 // ── Zod Validation Schema ─────────────────────────────────────────────────
 const studentSchema = z.object({
   full_name:          z.string().min(2, 'Full name must be at least 2 characters.'),
@@ -30,18 +30,24 @@ const studentSchema = z.object({
     const n = parseFloat(v); return !isNaN(n) && n > 0
   }, 'Must be a positive amount.'),
 })
- 
+
 type StudentFormValues = z.infer<typeof studentSchema>
- 
+
 interface AddStudentSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
 }
- 
+
+// ── Sahara AddStudentSheet ────────────────────────────────────────────
+// • Warm white sheet panel
+// • EB Garamond sheet title
+// • Sienna submit button
+// • Section labels in muted warm tone
+
 export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentSheetProps) {
   const [submitting, setSubmitting] = useState(false)
- 
+
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -51,7 +57,7 @@ export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentShe
       monthly_due_day: '', rent_amount: '',
     }
   })
- 
+
   async function onSubmit(values: StudentFormValues) {
     setSubmitting(true)
     try {
@@ -74,127 +80,143 @@ export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentShe
       setSubmitting(false)
     }
   }
- 
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full sm:max-w-md overflow-y-auto'>
+      <SheetContent
+        side='right'
+        className='w-full sm:max-w-md overflow-y-auto bg-[#fffcf8] border-l border-[rgba(216,208,200,0.70)]'
+      >
         <SheetHeader className='mb-6'>
-          <SheetTitle>Add New Student</SheetTitle>
-          <SheetDescription>Fill in the student details. Fields marked * are required.</SheetDescription>
+          <SheetTitle className='font-heading text-xl text-[#2c1f14]'>Add New Student</SheetTitle>
+          <SheetDescription className='font-sans text-[#8a7060] text-sm'>
+            Fill in the student details. Fields marked * are required.
+          </SheetDescription>
         </SheetHeader>
- 
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
- 
+
             {/* REQUIRED FIELDS */}
-            <p className='text-xs font-semibold text-slate-400 uppercase tracking-wider'>Required Info</p>
- 
+            <p className='text-xs font-semibold text-[#b0a090] uppercase tracking-[0.10em] font-sans'>
+              Required Info
+            </p>
+
             <FormField control={form.control} name='full_name' render={({ field }) => (
               <FormItem>
-                <FormLabel>Full Name *</FormLabel>
-                <FormControl><Input placeholder='e.g. Ravi Kumar' {...field} className='h-11' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Full Name *</FormLabel>
+                <FormControl><Input placeholder='e.g. Ravi Kumar' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             <div className='grid grid-cols-2 gap-3'>
               <FormField control={form.control} name='room_number' render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Room No. *</FormLabel>
-                  <FormControl><Input placeholder='101' {...field} className='h-11' /></FormControl>
-                  <FormMessage />
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Room No. *</FormLabel>
+                  <FormControl><Input placeholder='101' {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
                 </FormItem>
               )} />
               <FormField control={form.control} name='age' render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Age</FormLabel>
-                  <FormControl><Input type='number' placeholder='20' {...field} className='h-11' /></FormControl>
-                  <FormMessage />
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Age</FormLabel>
+                  <FormControl><Input type='number' placeholder='20' {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
                 </FormItem>
               )} />
             </div>
- 
+
             <FormField control={form.control} name='phone' render={({ field }) => (
               <FormItem>
-                <FormLabel>Mobile Number *</FormLabel>
-                <FormControl><Input type='tel' placeholder='9876543210' {...field} className='h-11' inputMode='numeric' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Mobile Number *</FormLabel>
+                <FormControl><Input type='tel' placeholder='9876543210' {...field} inputMode='numeric' /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             <FormField control={form.control} name='email' render={({ field }) => (
               <FormItem>
-                <FormLabel>Email *</FormLabel>
-                <FormControl><Input type='email' placeholder='student@example.com' {...field} className='h-11' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Email *</FormLabel>
+                <FormControl><Input type='email' placeholder='student@example.com' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             <div className='grid grid-cols-2 gap-3'>
               <FormField control={form.control} name='monthly_due_day' render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Due Day * (1-28)</FormLabel>
-                  <FormControl><Input type='number' min={1} max={28} placeholder='12' {...field} className='h-11' /></FormControl>
-                  <FormMessage />
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Due Day * (1-28)</FormLabel>
+                  <FormControl><Input type='number' min={1} max={28} placeholder='12' {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
                 </FormItem>
               )} />
               <FormField control={form.control} name='rent_amount' render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rent (₹) *</FormLabel>
-                  <FormControl><Input type='number' placeholder='5000' {...field} className='h-11' /></FormControl>
-                  <FormMessage />
+                  <FormLabel className='text-[#5c3d2a] font-sans'>Rent (₹) *</FormLabel>
+                  <FormControl><Input type='number' placeholder='5000' {...field} /></FormControl>
+                  <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
                 </FormItem>
               )} />
             </div>
- 
+
             <FormField control={form.control} name='date_of_joining' render={({ field }) => (
               <FormItem>
-                <FormLabel>Date of Joining *</FormLabel>
-                <FormControl><Input type='date' {...field} className='h-11' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Date of Joining *</FormLabel>
+                <FormControl><Input type='date' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             {/* OPTIONAL FIELDS */}
-            <p className='text-xs font-semibold text-slate-400 uppercase tracking-wider pt-2'>Optional Info</p>
- 
+            <p className='text-xs font-semibold text-[#b0a090] uppercase tracking-[0.10em] font-sans pt-2'>
+              Optional Info
+            </p>
+
             <FormField control={form.control} name='parent_phone' render={({ field }) => (
               <FormItem>
-                <FormLabel>Parent Mobile</FormLabel>
-                <FormControl><Input type='tel' placeholder='9876543211' {...field} className='h-11' inputMode='numeric' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Parent Mobile</FormLabel>
+                <FormControl><Input type='tel' placeholder='9876543211' {...field} inputMode='numeric' /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             <FormField control={form.control} name='emergency_contact' render={({ field }) => (
               <FormItem>
-                <FormLabel>Emergency Contact</FormLabel>
-                <FormControl><Input placeholder='Home phone or relative number' {...field} className='h-11' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Emergency Contact</FormLabel>
+                <FormControl><Input placeholder='Home phone or relative number' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             <FormField control={form.control} name='address' render={({ field }) => (
               <FormItem>
-                <FormLabel>Home Address</FormLabel>
-                <FormControl><Input placeholder='Village/City, District, State' {...field} className='h-11' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Home Address</FormLabel>
+                <FormControl><Input placeholder='Village/City, District, State' {...field} /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
+
             <FormField control={form.control} name='aadhaar_number' render={({ field }) => (
               <FormItem>
-                <FormLabel>Aadhaar Number</FormLabel>
-                <FormControl><Input placeholder='12-digit number' maxLength={12} {...field} className='h-11' inputMode='numeric' /></FormControl>
-                <FormMessage />
+                <FormLabel className='text-[#5c3d2a] font-sans'>Aadhaar Number</FormLabel>
+                <FormControl><Input placeholder='12-digit number' maxLength={12} {...field} inputMode='numeric' /></FormControl>
+                <FormMessage className='text-[#8c3c3c] font-sans text-xs' />
               </FormItem>
             )} />
- 
-            <Button type='submit' disabled={submitting}
-              className='w-full h-12 bg-blue-600 hover:bg-blue-500 font-semibold mt-2'>
-              {submitting ? <><Loader2 className='w-4 h-4 mr-2 animate-spin' />Adding...</> : 'Add Student'}
+
+            {/* Submit — Sahara primary sienna, 44px */}
+            <Button
+              type='submit'
+              disabled={submitting}
+              size='lg'
+              className='w-full font-semibold mt-2'
+            >
+              {submitting
+                ? <><Loader2 className='w-4 h-4 mr-2 animate-spin' />Adding...</>
+                : 'Add Student'}
             </Button>
- 
+
           </form>
         </Form>
       </SheetContent>

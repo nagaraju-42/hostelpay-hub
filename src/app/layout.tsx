@@ -1,9 +1,21 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { DM_Sans, DM_Serif_Display } from 'next/font/google'
 import { Toaster } from 'sonner'
 import './globals.css'
- 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+})
+
+const dmSerifDisplay = DM_Serif_Display({
+  subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-dm-serif',
+})
  
 // ── Metadata (used by browsers + search engines + social sharing) ─────────
 export const metadata: Metadata = {
@@ -50,14 +62,14 @@ export const viewport: Viewport = {
   initialScale:       1,
   maximumScale:       1,   // prevents zoom on input focus (better UX on mobile)
   userScalable:       false,
-  themeColor:         '#1A56DB',
+  themeColor:         '#0F2744',
   colorScheme:        'light',
   viewportFit:        'cover',   // full-bleed on iPhone notch/Dynamic Island
 }
  
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en-IN' className={inter.className}>
+      <html lang='en-IN' className={`${dmSans.variable} ${dmSerifDisplay.variable}`}>
       <head>
         {/* iOS Safari: splash screen */}
         <meta name='apple-mobile-web-app-capable' content='yes' />

@@ -1,126 +1,235 @@
 'use client'
- 
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Building2 } from 'lucide-react'
- 
+import { Loader2 } from 'lucide-react'
+
 export default function LoginPage() {
-  const router = useRouter()
+  const router  = useRouter()
   const supabase = createClient()
- 
-  // ── Form State ──────────────────────────────────────────────────
-  const [email, setEmail]       = useState('')
+
+  const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
- 
-  // ── Submit Handler ───────────────────────────────────────────────
+  const [showPw,   setShowPw]   = useState(false)
+  const [error,    setError]    = useState('')
+  const [loading,  setLoading]  = useState(false)
+
   async function handleLogin() {
     setError('')
- 
     if (!email || !password) {
       setError('Please enter your email and password.')
       return
     }
- 
     setLoading(true)
- 
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+      email:    email.trim().toLowerCase(),
       password,
     })
- 
     if (authError) {
-      if (authError.message.includes('Invalid login credentials')) {
-        setError('Wrong email or password. Please try again.')
-      } else {
-        setError('Login failed. Please check your connection and try again.')
-      }
+      setError(
+        authError.message.includes('Invalid login credentials')
+          ? 'Wrong email or password. Please try again.'
+          : 'Login failed. Please check your connection and try again.'
+      )
       setLoading(false)
       return
     }
- 
-    // Success — middleware will handle redirect to /dashboard
     router.push('/dashboard')
     router.refresh()
   }
- 
-  // ── Render ───────────────────────────────────────────────────────
+
   return (
-    <Card className='w-full max-w-sm shadow-2xl border-slate-700 bg-slate-800/90 backdrop-blur mx-4'>
- 
-      <CardHeader className='space-y-3 pb-4'>
-        {/* FIXED MOBILE HEADER LAYOUT */}
-        <div className='flex items-center gap-3 overflow-hidden'>
-          <div className='w-10 h-10 shrink-0 rounded-xl bg-blue-600 flex items-center justify-center'>
-            <Building2 className='w-6 h-6 text-white' />
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+
+      {/* ── Hero ── */}
+      <div style={{
+        background: 'linear-gradient(160deg, #0F2744 0%, #163354 100%)',
+        padding: '52px 28px 44px',
+        textAlign: 'center',
+      }}>
+        {/* Icon */}
+        <div style={{
+          width: 72, height: 72,
+          background: '#F59E0B',
+          borderRadius: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 18px',
+          fontSize: 36,
+          boxShadow: '0 8px 24px rgba(245,158,11,0.35)',
+        }}>
+          🏨
+        </div>
+
+        {/* Logotype */}
+        <div style={{
+          fontSize: 28,
+          fontWeight: 700,
+          fontFamily: '"DM Serif Display", serif',
+          color: '#fff',
+          letterSpacing: '-0.5px',
+        }}>
+          HostelPay<span style={{ color: '#F59E0B' }}>Hub</span>
+        </div>
+
+        <div style={{
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.45)',
+          marginTop: 6,
+          fontFamily: '"DM Sans", sans-serif',
+        }}>
+          Smart hostel payment management
+        </div>
+      </div>
+
+      {/* ── Form ── */}
+      <div style={{
+        padding: '28px 22px',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        background: '#fff',
+        borderRadius: '20px 20px 0 0',
+        marginTop: -16,
+      }}>
+
+        {/* Phone / Email */}
+        <div>
+          <div style={{
+            fontSize: 11, color: '#64748B',
+            fontFamily: '"DM Sans", sans-serif',
+            marginBottom: 6, fontWeight: 600, letterSpacing: '0.5px',
+          }}>
+            PHONE / EMAIL
           </div>
-          <div className='min-w-0'>
-            <p className='text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest truncate'>
-              Welcome to
-            </p>
-            <p className='text-white font-bold text-base sm:text-lg leading-none truncate mt-1'>
-              HostelPayHub
-            </p>
+          <div style={{
+            padding: '12px 14px',
+            borderRadius: 12,
+            border: email ? `2px solid #0F2744` : '1px solid #E2E8F0',
+            background: '#F8FAFC',
+            display: 'flex', alignItems: 'center', gap: 9,
+          }}>
+            <span>📱</span>
+            <input
+              id="email"
+              type="email"
+              placeholder="+91 98765 43210 or email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              disabled={loading}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              autoComplete="email"
+              suppressHydrationWarning
+              style={{
+                flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 14, fontFamily: '"DM Sans", sans-serif',
+                color: '#1E293B',
+              }}
+            />
           </div>
         </div>
-        <CardTitle className='text-white text-xl mt-2'>Owner Login</CardTitle>
-        <CardDescription className='text-slate-400 text-sm'>
-          Enter the credentials provided by your administrator.
-        </CardDescription>
-      </CardHeader>
- 
-      <CardContent className='space-y-4'>
- 
-        <div className='space-y-2'>
-          <Label htmlFor='email' className='text-slate-300 text-sm font-medium'>Email Address</Label>
-          <Input
-            id='email'
-            type='email'
-            placeholder='owner@example.com'
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            disabled={loading}
-            className='bg-slate-700 border-slate-600 text-white placeholder:text-slate-500
-                       focus:border-blue-500 h-12 text-base'
-          />
+
+        {/* Password */}
+        <div>
+          <div style={{
+            fontSize: 11, color: '#64748B',
+            fontFamily: '"DM Sans", sans-serif',
+            marginBottom: 6, fontWeight: 600, letterSpacing: '0.5px',
+          }}>
+            PASSWORD
+          </div>
+          <div style={{
+            padding: '12px 14px',
+            borderRadius: 12,
+            border: '1px solid #E2E8F0',
+            background: '#F8FAFC',
+            display: 'flex', alignItems: 'center', gap: 9,
+          }}>
+            <span>🔒</span>
+            <input
+              id="password"
+              type={showPw ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              disabled={loading}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              autoComplete="current-password"
+              suppressHydrationWarning
+              style={{
+                flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 14, fontFamily: '"DM Sans", sans-serif',
+                color: '#1E293B',
+              }}
+            />
+            <button
+              type="button"
+              aria-label={showPw ? 'Hide password' : 'Show password'}
+              onClick={() => setShowPw(!showPw)}
+              suppressHydrationWarning
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: 0 }}
+            >
+              {showPw ? '🙈' : '👁'}
+            </button>
+          </div>
         </div>
- 
-        <div className='space-y-2'>
-          <Label htmlFor='password' className='text-slate-300 text-sm font-medium'>Password</Label>
-          <Input
-            id='password'
-            type='password'
-            placeholder='Enter your password'
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            disabled={loading}
-            className='bg-slate-700 border-slate-600 text-white placeholder:text-slate-500
-                       focus:border-blue-500 h-12 text-base'
-          />
+
+        {/* Forgot password */}
+        <div style={{ textAlign: 'right', marginTop: -8 }}>
+          <span style={{ fontSize: 12, color: '#185FA5', fontFamily: '"DM Sans", sans-serif', cursor: 'pointer' }}>
+            Forgot password?
+          </span>
         </div>
- 
+
+        {/* Error */}
         {error && (
-          <div className='bg-red-950/50 border border-red-800 rounded-lg px-4 py-3'>
-            <p className='text-red-400 text-sm'>{error}</p>
+          <div style={{
+            background: '#FEF2F2', border: '1px solid #FECACA',
+            borderRadius: 10, padding: '10px 14px',
+          }}>
+            <p style={{ color: '#991B1B', fontSize: 13, fontFamily: '"DM Sans", sans-serif' }}>{error}</p>
           </div>
         )}
- 
-        <Button
+
+        {/* CTA */}
+        <button
+          id="login-btn"
           onClick={handleLogin}
           disabled={loading}
-          className='w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base mt-2'
+          suppressHydrationWarning
+          style={{
+            background: loading ? '#334155' : '#0F2744',
+            color: '#fff',
+            border: 'none',
+            padding: '15px',
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: '"DM Sans", sans-serif',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            marginTop: 4,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'background 0.2s',
+            minHeight: 50,
+          }}
         >
-          {loading ? <><Loader2 className='w-4 h-4 mr-2 animate-spin' /> Logging in...</> : 'Login to Dashboard'}
-        </Button>
- 
-      </CardContent>
-    </Card>
+          {loading
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Logging in…</>
+            : <>🔑 Login to Dashboard</>
+          }
+        </button>
+
+        {/* Footer */}
+        <div style={{ marginTop: 'auto', textAlign: 'center', paddingTop: 24 }}>
+          <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>
+            Secure owner login only
+          </div>
+          <div style={{ fontSize: 11, color: '#185FA5', fontFamily: '"DM Sans", sans-serif', marginTop: 4, cursor: 'pointer' }}>
+            New hostel? Contact support
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

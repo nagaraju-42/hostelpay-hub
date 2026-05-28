@@ -1,29 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Student, StudentFormData, ApiSuccess, ApiError } from '@/types'
- 
+import { getPaymentStatus } from '@/lib/utils/due-calc'
+import type { Student, StudentFormData, ApiSuccess, ApiError, Payment } from '@/types'
+
 // ══════════════════════════════════════════════════════════════════════════
 // GET /api/students
 // Returns all ACTIVE students for the currently logged-in owner.
-// RLS on the students table enforces owner isolation automatically.
+// Optional: ?withStatus=1 enriches each student with a payment_status field
+//   ('paid' | 'due_today' | 'overdue' | 'upcoming') without schema changes.
 // ══════════════════════════════════════════════════════════════════════════
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient()
- 
-  // Verify auth
+
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
- 
-  // Fetch all active students for this owner
-  // RLS policy 'owner_sees_own_students' auto-filters by owner_id = auth.uid()
+
+  const withStatus = request.nextUrl.searchParams.get('withStatus') === '1'
+
   const { data: students, error } = await supabase
     .from('students')
     .select('*')
     .eq('is_active', true)
     .order('full_name', { ascending: true })
- 
+
   if (error) {
     console.error('[GET /api/students]', error)
     return NextResponse.json<ApiError>(
@@ -31,9 +32,38 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
- 
-  return NextResponse.json<ApiSuccess<Student[]>>({ data: students ?? [] })
+
+  if (!withStatus || !students || students.length === 0) {
+    return NextResponse.json<ApiSuccess<Student[]>>({ data: students ?? [] })
+  }
+
+  // ── Enrich with payment status (withStatus=1) ────────────────────────────
+  const today         = new Date()
+  const thirtyTwoDaysAgo = new Date(today)
+  thirtyTwoDaysAgo.setDate(today.getDate() - 32)
+
+  const studentIds = students.map(s => s.id)
+  const { data: recentPayments } = await supabase
+    .from('payments')
+    .select('*')
+    .in('student_id', studentIds)
+    .gte('paid_at', thirtyTwoDaysAgo.toISOString())
+
+  const paymentsByStudent = new Map<string, Payment[]>()
+  for (const p of (recentPayments ?? [])) {
+    const arr = paymentsByStudent.get(p.student_id) ?? []
+    arr.push(p)
+    paymentsByStudent.set(p.student_id, arr)
+  }
+
+  const enriched = students.map(s => ({
+    ...s,
+    payment_status: getPaymentStatus(s.monthly_due_day, paymentsByStudent.get(s.id) ?? [], today),
+  }))
+
+  return NextResponse.json<ApiSuccess<(Student & { payment_status: string })[]>>({ data: enriched })
 }
+
  
 // ══════════════════════════════════════════════════════════════════════════
 // POST /api/students

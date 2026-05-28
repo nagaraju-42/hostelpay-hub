@@ -2,7 +2,46 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { hasPaidThisCycle, getCurrentCycleDueDate } from '@/lib/utils/due-calc'
 import type { Payment, ApiSuccess, ApiError } from '@/types'
- 
+
+// ══════════════════════════════════════════════════════════════════════════
+// GET /api/payments
+// Returns recent payments for this owner, optionally limited via ?limit=N
+// Joins student name + room for display in Recent Payments / History views.
+// ══════════════════════════════════════════════════════════════════════════
+export async function GET(request: NextRequest) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
+
+  const limit = parseInt(request.nextUrl.searchParams.get('limit') ?? '50')
+
+  const { data: payments, error } = await supabase
+    .from('payments')
+    .select(`
+      *,
+      students!inner(full_name, room_number)
+    `)
+    .eq('owner_id', user.id)
+    .order('paid_at', { ascending: false })
+    .limit(isNaN(limit) ? 50 : Math.min(limit, 200))
+
+  if (error) {
+    console.error('[GET /api/payments]', error)
+    return NextResponse.json<ApiError>({ error: 'Failed to fetch payments.' }, { status: 500 })
+  }
+
+  // Flatten student fields to top level
+  const flat = (payments ?? []).map((p: any) => ({
+    ...p,
+    student_name: p.students?.full_name  ?? '',
+    room_number:  p.students?.room_number ?? '',
+    students:     undefined,
+  }))
+
+  return NextResponse.json<ApiSuccess<typeof flat>>({ data: flat })
+}
+
+
 interface MarkPaidBody {
   student_id:   string
   amount_paid:  number

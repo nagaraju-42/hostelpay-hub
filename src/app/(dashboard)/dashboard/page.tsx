@@ -1,208 +1,274 @@
 'use client'
- 
+
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
-import { RefreshCw, IndianRupee, Users, AlertTriangle, CheckCircle2, Clock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { MarkPaidDialog } from '@/components/payments/MarkPaidDialog'
-import { OverdueBanner } from '@/components/payments/OverdueBanner'
-import { DueTodayCard } from '@/components/payments/DueTodayCard'
+import { MobileAvatar, initialsFromName, colorFromName } from '@/components/mobile/MobileAvatar'
+import { StatCard } from '@/components/mobile/StatCard'
+import { StatusBadge } from '@/components/mobile/StatusBadge'
 import type { DueTodayStudent } from '@/app/api/payments/due-today/route'
 import type { Payment } from '@/types'
- export const dynamic = 'force-dynamic'
+
+export const dynamic = 'force-dynamic'
+
+interface DashSummary { total_amount: number; total_count: number }
+interface RecentPayment extends Payment { student_name: string; room_number: string }
+
 export default function DashboardPage() {
-  // ── State ──────────────────────────────────────────────────────────────
-  const [dueToday,  setDueToday]  = useState<DueTodayStudent[]>([])
-  const [overdue,   setOverdue]   = useState<DueTodayStudent[]>([])
-  const [paidToday, setPaidToday] = useState<DueTodayStudent[]>([])
-  const [summary,   setSummary]   = useState<{total_amount:number;total_count:number}|null>(null)
-  const [loading,   setLoading]   = useState(true)
-  const [refreshing,setRefreshing]= useState(false)
- 
-  // Mark Paid Dialog state
-  const [selectedStudent, setSelectedStudent] = useState<DueTodayStudent | null>(null)
-  const [dialogOpen,      setDialogOpen]      = useState(false)
- 
-  // ── Data Fetching ──────────────────────────────────────────────────────
-  const fetchAll = useCallback(async (showRefreshing = false) => {
-    if (showRefreshing) setRefreshing(true)
-    else setLoading(true)
- 
+  const router  = useRouter()
+  const supabase = createClient()
+
+  const [hostelName, setHostelName]     = useState('My Hostel')
+  const [ownerName,  setOwnerName]      = useState('')
+  const [dueToday,   setDueToday]       = useState<DueTodayStudent[]>([])
+  const [overdue,    setOverdue]        = useState<DueTodayStudent[]>([])
+  const [summary,    setSummary]        = useState<DashSummary | null>(null)
+  const [totalStudents, setTotalStudents] = useState(0)
+  const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([])
+  const [loading,    setLoading]        = useState(true)
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true)
     try {
-      const [dueRes, overdueRes, summaryRes] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
+      // Fetch owner info
+      const { data: owner } = await supabase
+        .from('hostel_owners')
+        .select('hostel_name, full_name')
+        .eq('id', user.id)
+        .single()
+      if (owner) {
+        setHostelName(owner.hostel_name ?? 'My Hostel')
+        setOwnerName(owner.full_name ?? '')
+      }
+
+      // Fetch dashboard data in parallel
+      const [dueRes, overdueRes, summaryRes, studRes, payRes] = await Promise.all([
         fetch('/api/payments/due-today'),
         fetch('/api/payments/overdue'),
         fetch('/api/payments/summary'),
+        fetch('/api/students'),
+        fetch('/api/payments?limit=5'),
       ])
- 
-      const [dueData, overdueData, summaryData] = await Promise.all([
-        dueRes.json(),
-        overdueRes.json(),
-        summaryRes.json(),
+      const [dueData, overdueData, summaryData, studData, payData] = await Promise.all([
+        dueRes.json(), overdueRes.json(), summaryRes.json(),
+        studRes.json(), payRes.json(),
       ])
- 
-      setDueToday(dueData.data  ?? [])
+
+      setDueToday(dueData.data   ?? [])
       setOverdue(overdueData.data ?? [])
       setSummary(summaryData.data ?? null)
+      setTotalStudents((studData.data ?? []).length)
+      setRecentPayments(payData.data ?? [])
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
-  }, [])
- 
+  }, [supabase, router])
+
   useEffect(() => { fetchAll() }, [fetchAll])
- 
-  // ── Mark Paid Handler ──────────────────────────────────────────────────
-  function openMarkPaid(student: DueTodayStudent) {
-    setSelectedStudent(student)
-    setDialogOpen(true)
-  }
- 
-  function onPaymentSuccess(payment: Payment) {
-    if (!selectedStudent) return
- 
-    // Optimistic UI: move student from 'due today' to 'paid today'
-    setDueToday(prev => prev.filter(s => s.id !== selectedStudent.id))
-    setOverdue(prev  => prev.filter(s => s.id !== selectedStudent.id))
-    setPaidToday(prev => [...prev, selectedStudent])
- 
-    // Update summary count
-    setSummary(prev => prev ? {
-      ...prev,
-      total_amount: prev.total_amount + payment.amount_paid,
-      total_count:  prev.total_count + 1,
-    } : prev)
- 
-    setSelectedStudent(null)
-  }
- 
-  // ── Render ─────────────────────────────────────────────────────────────
-  const today = new Date()
-  const todayStr = format(today, 'EEEE, d MMMM yyyy')
- 
+
+  const totalDue    = dueToday.length + overdue.length
+  const pendingCount = overdue.length
+  const collectedMTD = summary
+    ? summary.total_amount >= 100000
+      ? `₹${(summary.total_amount / 100000).toFixed(2)}L`
+      : `₹${Math.round(summary.total_amount / 1000)}K`
+    : '₹0'
+
+  const initials = initialsFromName(ownerName || hostelName)
+  const avatarColor = colorFromName(ownerName || hostelName)
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning 👋' : hour < 17 ? 'Good afternoon 👋' : 'Good evening 👋'
+
+  const QUICK_ACTIONS = [
+    { icon: '➕', label: 'Add student',    bg: '#0F2744', txt: '#fff',     href: '/dashboard/students/new' },
+    { icon: '⏰', label: 'Due today',      bg: '#FEF3C7', txt: '#92400E',  href: '/dashboard/due-today'   },
+    { icon: '👥', label: 'All students',   bg: '#ECFDF5', txt: '#065F46',  href: '/dashboard/students'    },
+    { icon: '📥', label: 'Export report',  bg: '#EDE9FE', txt: '#5B21B6',  href: '/dashboard/export'      },
+  ]
+
   return (
-    <div className='space-y-6'>
- 
-      {/* Page Header */}
-      <div className='flex items-start justify-between gap-3'>
-        <div>
-          <h1 className='text-2xl font-bold text-slate-800'>Today&apos;s Dues</h1>
-          <p className='text-slate-500 text-sm mt-0.5'>{todayStr}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+
+      {/* ── Top Bar ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0F2744 0%, #163354 100%)',
+        padding: '14px 16px',
+        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: '"DM Sans", sans-serif' }}>
+            {greeting}
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 400, color: '#fff', fontFamily: '"DM Serif Display", serif' }}>
+            {hostelName}
+          </div>
         </div>
-        <Button variant='outline' size='sm' onClick={() => fetchAll(true)} disabled={refreshing}
-          className='gap-1.5 text-slate-500 h-9 flex-shrink-0'>
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', padding: 0 }}
+            title="Notifications"
+          >
+            🔔
+          </button>
+          <MobileAvatar initials={initials} color={avatarColor} size={34} />
+        </div>
       </div>
- 
-      {/* Stats Row */}
-      {!loading && (
-        <div className='grid grid-cols-3 gap-3'>
-          <div className='bg-orange-50 rounded-xl p-3 border border-orange-100'>
-            <div className='flex items-center gap-1.5 mb-1'>
-              <Clock className='w-3.5 h-3.5 text-orange-600' />
-              <p className='text-xs text-orange-600 font-medium'>Due Today</p>
-            </div>
-            <p className='text-2xl font-bold text-orange-700'>{dueToday.length}</p>
-          </div>
-          <div className='bg-red-50 rounded-xl p-3 border border-red-100'>
-            <div className='flex items-center gap-1.5 mb-1'>
-              <AlertTriangle className='w-3.5 h-3.5 text-red-600' />
-              <p className='text-xs text-red-600 font-medium'>Overdue</p>
-            </div>
-            <p className='text-2xl font-bold text-red-700'>{overdue.length}</p>
-          </div>
-          <div className='bg-green-50 rounded-xl p-3 border border-green-100'>
-            <div className='flex items-center gap-1.5 mb-1'>
-              <IndianRupee className='w-3.5 h-3.5 text-green-600' />
-              <p className='text-xs text-green-600 font-medium'>Collected</p>
-            </div>
-            <p className='text-2xl font-bold text-green-700'>
-              {summary ? `₹${Math.round(summary.total_amount/1000)}k` : '—'}
-            </p>
-          </div>
-        </div>
-      )}
- 
-      {/* Loading State */}
-      {loading && (
-        <div className='space-y-3'>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className='bg-white rounded-2xl border border-slate-200 p-4 space-y-3'>
-              <div className='flex justify-between'>
-                <Skeleton className='h-5 w-32' /><Skeleton className='h-5 w-16' />
+
+      {/* ── Scrollable Content ── */}
+      <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as const }}>
+
+        {/* ── Alert Banner ── */}
+        {totalDue > 0 && (
+          <button
+            onClick={() => router.push('/dashboard/due-today')}
+            style={{
+              width: '100%', textAlign: 'left',
+              background: '#FEF3C7',
+              borderTop: 'none', borderRight: 'none', borderBottom: 'none',
+              borderLeft: '4px solid #F59E0B',
+              padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 18 }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#92400E', fontFamily: '"DM Sans", sans-serif' }}>
+                {totalDue} payment{totalDue > 1 ? 's' : ''} due today
               </div>
-              <Skeleton className='h-10 w-full' />
+              <div style={{ fontSize: 11, color: '#92400E', fontFamily: '"DM Sans", sans-serif' }}>
+                Tap to view &amp; collect →
+              </div>
             </div>
-          ))}
+          </button>
+        )}
+
+        {/* ── Stats Row ── */}
+        <div style={{ padding: '14px 16px', display: 'flex', gap: 9 }}>
+          {loading ? (
+            <>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} style={{ flex: 1, height: 64, background: '#E2E8F0', borderRadius: 12, animation: 'pulse 1.5s infinite' }} />
+              ))}
+            </>
+          ) : (
+            <>
+              <StatCard value={totalStudents}  label="Total students" color="#0F2744"  />
+              <StatCard value={collectedMTD}   label="Collected MTD"  color="#059669"  />
+              <StatCard value={dueToday.length} label="Due today"     color="#E24B4A"  />
+              <StatCard value={pendingCount}    label="Pending"       color="#F59E0B"  />
+            </>
+          )}
         </div>
-      )}
- 
-      {/* Overdue Banner */}
-      {!loading && overdue.length > 0 && (
-        <OverdueBanner students={overdue} onMarkPaid={openMarkPaid} />
-      )}
- 
-      {/* Due Today Section */}
-      {!loading && (
-        <div className='space-y-3'>
-          <div className='flex items-center gap-2'>
-            <Clock className='w-4 h-4 text-orange-500' />
-            <h2 className='font-semibold text-slate-700'>
-              Due Today
-              {dueToday.length > 0 && (
-                <span className='ml-2 text-sm font-normal text-slate-400'>
-                  ({dueToday.length} student{dueToday.length > 1 ? 's' : ''})
-                </span>
-              )}
-            </h2>
+
+        {/* ── Quick Actions ── */}
+        <div style={{ padding: '0 16px 14px' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: '#64748B',
+            marginBottom: 9, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px',
+          }}>
+            QUICK ACTIONS
           </div>
- 
-          {dueToday.length === 0 && paidToday.length === 0 && (
-            <div className='text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200'>
-              <CheckCircle2 className='w-10 h-10 text-green-400 mx-auto mb-2' />
-              <p className='font-medium text-slate-600'>All clear for today!</p>
-              <p className='text-slate-400 text-sm mt-1'>No rent due today.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+            {QUICK_ACTIONS.map(q => (
+              <button
+                key={q.label}
+                onClick={() => router.push(q.href)}
+                style={{
+                  background: q.bg, color: q.txt, border: 'none',
+                  borderRadius: 12, padding: '13px 12px',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: '"DM Sans", sans-serif',
+                  minHeight: 44, textAlign: 'left',
+                  transition: 'transform 0.1s, opacity 0.1s',
+                }}
+                onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+                onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                <span style={{ fontSize: 16 }}>{q.icon}</span>{q.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Recent Payments ── */}
+        <div style={{ padding: '0 16px 24px' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: '#64748B',
+            marginBottom: 9, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px',
+          }}>
+            RECENT PAYMENTS
+          </div>
+
+          {loading ? (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '16px' }}>
+              {[...Array(2)].map((_, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: i === 0 ? '1px solid #F1F5F9' : 'none' }}>
+                  <div style={{ width: 40, height: 40, background: '#E2E8F0', borderRadius: '50%' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ height: 13, width: 120, background: '#E2E8F0', borderRadius: 6, marginBottom: 4 }} />
+                    <div style={{ height: 11, width: 80,  background: '#F1F5F9', borderRadius: 6 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : recentPayments.length === 0 ? (
+            <div style={{
+              background: '#fff', borderRadius: 14, border: '1px dashed #E2E8F0',
+              padding: '24px 16px', textAlign: 'center',
+              fontSize: 13, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif',
+            }}>
+              No payments recorded yet
+            </div>
+          ) : (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '0 16px' }}>
+              {recentPayments.slice(0, 5).map((p, i) => {
+                const name  = (p as any).student_name ?? 'Student'
+                const room  = (p as any).room_number  ?? '—'
+                const paidAt = p.paid_at
+                  ? `${Math.round((Date.now() - new Date(p.paid_at).getTime()) / 3600000)} hrs ago`
+                  : ''
+                const initials   = initialsFromName(name)
+                const col        = colorFromName(name)
+                const amt        = `+₹${Number(p.amount_paid).toLocaleString('en-IN')}`
+                const isLast     = i === recentPayments.slice(0, 5).length - 1
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', padding: '11px 0',
+                      borderBottom: isLast ? 'none' : '1px solid #F1F5F9',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                      <MobileAvatar initials={initials} color={col} size={40} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>
+                          {name}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
+                          Room {room} · {paidAt}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                        {amt}
+                      </div>
+                      <StatusBadge label="Paid" type="green" />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
- 
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-            {dueToday.map(student => (
-              <DueTodayCard key={student.id} student={student} onMarkPaid={openMarkPaid} />
-            ))}
-          </div>
         </div>
-      )}
- 
-      {/* Paid Today Section */}
-      {!loading && paidToday.length > 0 && (
-        <div className='space-y-3'>
-          <div className='flex items-center gap-2'>
-            <CheckCircle2 className='w-4 h-4 text-green-500' />
-            <h2 className='font-semibold text-slate-700'>
-              Paid Today
-              <span className='ml-2 text-sm font-normal text-slate-400'>
-                ({paidToday.length} student{paidToday.length > 1 ? 's' : ''})
-              </span>
-            </h2>
-          </div>
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-            {paidToday.map(student => (
-              <DueTodayCard key={student.id} student={student} onMarkPaid={openMarkPaid} isPaid />
-            ))}
-          </div>
-        </div>
-      )}
- 
-      {/* Mark Paid Dialog */}
-      <MarkPaidDialog
-        student={selectedStudent}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={onPaymentSuccess}
-      />
+      </div>
     </div>
   )
 }

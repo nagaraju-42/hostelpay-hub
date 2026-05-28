@@ -1,13 +1,13 @@
 {
-  "name":             "HostelPayHub",
+  "name":             "HostelPay Hub",
   "short_name":       "HostelPay",
-  "description":      "Hostel rent & payment management for hostel owners",
+  "description":      "Smart hostel rent & payment management for hostel owners",
   "start_url":        "/dashboard",
   "scope":            "/",
   "display":          "standalone",
   "orientation":      "portrait",
-  "theme_color":      "#1A56DB",
-  "background_color": "#ffffff",
+  "theme_color":      "#0F2744",
+  "background_color": "#0F2744",
   "lang":             "en-IN",
   "categories":       ["business", "finance", "productivity"],
   "icons": [
@@ -62,9 +62,15 @@
   ],
   "shortcuts": [
     {
-      "name":      "Today's Dues",
-      "short_name":"Dues",
+      "name":      "Dashboard",
+      "short_name":"Home",
       "url":       "/dashboard",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name":      "Due Today",
+      "short_name":"Due Today",
+      "url":       "/dashboard/due-today",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {

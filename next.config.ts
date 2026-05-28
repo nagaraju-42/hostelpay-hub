@@ -2,9 +2,14 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  // PWA is active in production only. Enabling it in dev breaks webpack HMR
+  // (GenerateSW called multiple times) and corrupts API JSON responses.
   disable: process.env.NODE_ENV === 'development',
   runtimeCaching: require('next-pwa/cache'),
   buildExcludes: [/middleware-manifest\.json$/],
+  fallbacks: {
+    document: '/offline',
+  },
 })
  
 /** @type {import('next').NextConfig} */

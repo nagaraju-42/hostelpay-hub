@@ -11,10 +11,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',          icon: '🏠', activeIcon: '🏠', label: 'Home'     },
-  { href: '/dashboard/students', icon: '👥', activeIcon: '👥', label: 'Students' },
-  { href: '/dashboard/history',  icon: '📊', activeIcon: '📊', label: 'History'  },
-  { href: '/dashboard/settings', icon: '⚙️', activeIcon: '⚙️', label: 'Settings' },
+  { href: '/dashboard',              icon: '🏠', activeIcon: '🏠', label: 'Home'     },
+  { href: '/dashboard/pending-dues', icon: '💰', activeIcon: '💰', label: 'Dues'     },
+  { href: '/dashboard/students',     icon: '👥', activeIcon: '👥', label: 'Students' },
+  { href: '/dashboard/history',      icon: '📊', activeIcon: '📊', label: 'History'  },
+  { href: '/dashboard/settings',     icon: '⚙️', activeIcon: '⚙️', label: 'Settings' },
 ]
 
 export function BottomNav() {

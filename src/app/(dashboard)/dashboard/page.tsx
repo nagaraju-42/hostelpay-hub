@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
   const QUICK_ACTIONS = [
     { icon: '➕', label: 'Add student',    bg: '#0F2744', txt: '#fff',     href: '/dashboard/students/new' },
-    { icon: '⏰', label: 'Due today',      bg: '#FEF3C7', txt: '#92400E',  href: '/dashboard/due-today'   },
+    { icon: '💰', label: 'Pending dues',   bg: '#FEF2F2', txt: '#991B1B',  href: '/dashboard/pending-dues' },
     { icon: '👥', label: 'All students',   bg: '#ECFDF5', txt: '#065F46',  href: '/dashboard/students'    },
     { icon: '📥', label: 'Export report',  bg: '#EDE9FE', txt: '#5B21B6',  href: '/dashboard/export'      },
   ]
@@ -121,7 +121,7 @@ export default function DashboardPage() {
         {/* ── Alert Banner ── */}
         {totalDue > 0 && (
           <button
-            onClick={() => router.push('/dashboard/due-today')}
+            onClick={() => router.push('/dashboard/pending-dues')}
             style={{
               width: '100%', textAlign: 'left',
               background: '#FEF3C7',

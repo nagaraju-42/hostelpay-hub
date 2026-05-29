@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import { hasPaidThisCycle, getDaysPastDue } from '@/lib/utils/due-calc'
 import type { Student, Payment, ApiSuccess, ApiError } from '@/types'
  
@@ -16,9 +16,7 @@ export interface DueTodayStudent {
 }
  
 export async function GET(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
- 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   const today    = new Date()
@@ -28,6 +26,7 @@ export async function GET(request: NextRequest) {
   const { data: allStudents, error: studErr } = await supabase
     .from('students')
     .select('id, full_name, room_number, phone, rent_amount, monthly_due_day, date_of_joining')
+    .eq('owner_id', user.id)
     .eq('is_active', true)
  
   if (studErr || !allStudents) {
@@ -51,6 +50,7 @@ export async function GET(request: NextRequest) {
   const { data: recentPayments } = await supabase
     .from('payments')
     .select('*')
+    .eq('owner_id', user.id)
     .in('student_id', studentIds)
     .gte('paid_at', thirtyTwoDaysAgo.toISOString())
     .order('paid_at', { ascending: false })

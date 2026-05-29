@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import type { ApiSuccess, ApiError } from '@/types'
  
 export interface PaymentSummary {
@@ -15,9 +15,8 @@ export interface PaymentSummary {
 }
  
 export async function GET(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
+  const { supabase, user } = await getAuthSession()
  
-  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   // Get month from query param, default to current month
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
  
   // Count unpaid students (active students - students who paid this month)
   const { count: activeStudents } = await supabase
-    .from('students').select('*', { count: 'exact', head: true }).eq('is_active', true)
+    .from('students').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('is_active', true)
  
   const summary: PaymentSummary = {
     month:        targetMonth,

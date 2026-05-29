@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import type { StudentWithPayments, Student, ApiSuccess, ApiError } from '@/types'
  
 // ══════════════════════════════════════════════════════════════════════════
@@ -11,9 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = await createServerSupabaseClient()
- 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   // Fetch student — RLS ensures owner can only fetch their own
@@ -21,6 +19,7 @@ export async function GET(
     .from('students')
     .select('*')
     .eq('id', id)
+    .eq('owner_id', user.id)
     .single()
  
   if (studentError || !student) {
@@ -32,6 +31,7 @@ export async function GET(
     .from('payments')
     .select('*')
     .eq('student_id', id)
+    .eq('owner_id', user.id)
     .order('paid_at', { ascending: false })
  
   const result: StudentWithPayments = {
@@ -52,9 +52,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = await createServerSupabaseClient()
- 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   let body: Partial<Record<string, any>>
@@ -92,6 +90,7 @@ export async function PATCH(
     .from('students')
     .update(safeBody)
     .eq('id', id)
+    .eq('owner_id', user.id)
     .select()
     .single()
  
@@ -116,9 +115,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = await createServerSupabaseClient()
- 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   // Soft delete — RLS ensures only owner can deactivate their student
@@ -126,6 +123,7 @@ export async function DELETE(
     .from('students')
     .update({ is_active: false })
     .eq('id', id)
+    .eq('owner_id', user.id)
  
   if (error) {
     return NextResponse.json<ApiError>(

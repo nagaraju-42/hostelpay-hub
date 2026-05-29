@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import { hasPaidThisCycle, getCurrentCycleDueDate } from '@/lib/utils/due-calc'
 import type { Payment, ApiSuccess, ApiError } from '@/types'
 
@@ -9,8 +9,7 @@ import type { Payment, ApiSuccess, ApiError } from '@/types'
 // Joins student name + room for display in Recent Payments / History views.
 // ══════════════════════════════════════════════════════════════════════════
 export async function GET(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
 
   const limit = parseInt(request.nextUrl.searchParams.get('limit') ?? '50')
@@ -50,9 +49,8 @@ interface MarkPaidBody {
 }
  
 export async function POST(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
+  const { supabase, user } = await getAuthSession()
  
-  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   let body: MarkPaidBody
@@ -75,6 +73,7 @@ export async function POST(request: NextRequest) {
     .from('students')
     .select('id, owner_id, monthly_due_day, rent_amount, full_name')
     .eq('id', body.student_id)
+    .eq('owner_id', user.id)
     .single()
  
   if (studErr || !student) {
@@ -94,6 +93,7 @@ export async function POST(request: NextRequest) {
     // .select('id, paid_at')
     .select('*')
     .eq('student_id', body.student_id)
+    .eq('owner_id', user.id)
     .gte('paid_at', thirtyTwoDaysAgo.toISOString())
  
   if (hasPaidThisCycle(student.monthly_due_day, existingPayments || [], today)) {

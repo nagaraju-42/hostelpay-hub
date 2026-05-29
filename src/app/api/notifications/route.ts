@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, supabaseAdmin } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import type { Notification, ApiSuccess, ApiError } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -8,9 +9,7 @@ import type { Notification, ApiSuccess, ApiError } from '@/types'
 // joined with the student's name, room number, and phone.
 // ══════════════════════════════════════════════════════════════════════════
 export async function GET(_request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getAuthSession()
   if (!user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -50,9 +49,7 @@ export async function GET(_request: NextRequest) {
 // Body: { ids: string[] }
 // ══════════════════════════════════════════════════════════════════════════
 export async function PATCH(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getAuthSession()
   if (!user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, supabaseAdmin } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import type { ApiSuccess, ApiError } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -10,10 +11,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createServerSupabaseClient()
+  const { supabase, user } = await getAuthSession()
   const id = (await params).id
 
-  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -46,10 +46,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createServerSupabaseClient()
+  const { supabase, user } = await getAuthSession()
   const id = (await params).id
 
-  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }

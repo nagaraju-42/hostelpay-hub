@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import type { ApiSuccess, ApiError } from '@/types'
  
 export interface ExportRow {
@@ -30,8 +30,7 @@ export interface ExportData {
 }
  
 export async function GET(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
   // Get month from query param
@@ -52,6 +51,7 @@ export async function GET(request: NextRequest) {
   const { data: students } = await supabase
     .from('students')
     .select('id, full_name, room_number, phone, rent_amount, monthly_due_day')
+    .eq('owner_id', user.id)
     .eq('is_active', true)
     .order('room_number')
  

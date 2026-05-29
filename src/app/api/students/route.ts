@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import { getPaymentStatus } from '@/lib/utils/due-calc'
 import type { Student, StudentFormData, ApiSuccess, ApiError, Payment } from '@/types'
 
@@ -10,10 +10,8 @@ import type { Student, StudentFormData, ApiSuccess, ApiError, Payment } from '@/
 //   ('paid' | 'due_today' | 'overdue' | 'upcoming') without schema changes.
 // ══════════════════════════════════════════════════════════════════════════
 export async function GET(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
+  const { supabase, user } = await getAuthSession()
+  if (!user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -22,6 +20,7 @@ export async function GET(request: NextRequest) {
   const { data: students, error } = await supabase
     .from('students')
     .select('*')
+    .eq('owner_id', user.id)
     .eq('is_active', true)
     .order('full_name', { ascending: true })
 
@@ -46,6 +45,7 @@ export async function GET(request: NextRequest) {
   const { data: recentPayments } = await supabase
     .from('payments')
     .select('*')
+    .eq('owner_id', user.id)
     .in('student_id', studentIds)
     .gte('paid_at', thirtyTwoDaysAgo.toISOString())
 
@@ -71,11 +71,8 @@ export async function GET(request: NextRequest) {
 // Validates required fields. Auto-sets owner_id from session.
 // ══════════════════════════════════════════════════════════════════════════
 export async function POST(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
- 
-  // Verify auth
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
+  const { supabase, user } = await getAuthSession()
+  if (!user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
  

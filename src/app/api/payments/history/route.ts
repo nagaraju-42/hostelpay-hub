@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/auth'
 import type { ApiSuccess, ApiError } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -8,8 +8,7 @@ import type { ApiSuccess, ApiError } from '@/types'
 // Joins student name + room for history display.
 // ══════════════════════════════════════════════════════════════════════════
 export async function GET(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
 
   const monthParam = request.nextUrl.searchParams.get('month') // e.g. "2026-05"

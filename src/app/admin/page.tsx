@@ -43,6 +43,23 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  async function handleImpersonate(ownerId: string) {
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner_id: ownerId })
+      })
+      if (res.ok) {
+        window.location.href = '/dashboard'
+      } else {
+        alert('Failed to start impersonation')
+      }
+    } catch (e) {
+      alert('Network error')
+    }
+  }
+
   const totalStudents = owners.reduce((s, o) => s + (o.student_count || 0), 0)
   const totalRevenue  = owners.reduce((s, o) => s + (o.monthly_revenue || 0), 0)
 
@@ -218,18 +235,31 @@ export default function AdminDashboardPage() {
                   {/* Status + Link */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                     <StatusPill label="Active" type="green" />
-                    <Link href={`/admin/owners/${owner.id}`}>
-                      <button style={{
-                        background: 'rgba(255,255,255,0.07)', border: 'none',
-                        borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        fontSize: 12, color: 'rgba(255,255,255,0.5)',
-                        fontFamily: '"DM Sans", sans-serif',
-                        transition: 'background 0.15s, color 0.15s',
-                      }}>
-                        <ExternalLink size={12} /> View
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button 
+                        onClick={() => handleImpersonate(owner.id)}
+                        style={{
+                          background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)',
+                          borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          fontSize: 12, color: '#F59E0B', fontWeight: 600,
+                          fontFamily: '"DM Sans", sans-serif',
+                        }}>
+                        🕵️ Impersonate
                       </button>
-                    </Link>
+                      <Link href={`/admin/owners/${owner.id}`}>
+                        <button style={{
+                          background: 'rgba(255,255,255,0.07)', border: 'none',
+                          borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          fontSize: 12, color: 'rgba(255,255,255,0.5)',
+                          fontFamily: '"DM Sans", sans-serif',
+                          transition: 'background 0.15s, color 0.15s',
+                        }}>
+                          <ExternalLink size={12} /> View
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               )

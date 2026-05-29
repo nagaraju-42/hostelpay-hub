@@ -227,7 +227,7 @@ export default function DashboardPage() {
                 const name  = (p as any).student_name ?? 'Student'
                 const room  = (p as any).room_number  ?? '—'
                 const paidAt = p.paid_at
-                  ? `${Math.round((Date.now() - new Date(p.paid_at).getTime()) / 3600000)} hrs ago`
+                  ? format(new Date(p.paid_at), 'd MMM yyyy')
                   : ''
                 const initials   = initialsFromName(name)
                 const col        = colorFromName(name)

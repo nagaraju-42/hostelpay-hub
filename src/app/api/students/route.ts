@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
       date_of_joining:   body.date_of_joining,
       monthly_due_day:   dueDay,
       rent_amount:       rent,
+      approval_status:   'approved',
     })
     .select()
     .single()

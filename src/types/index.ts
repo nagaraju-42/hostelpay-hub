@@ -9,12 +9,29 @@ export type PaymentMode = 'cash' | 'upi' | 'bank'
  
 // ── Hostel Owner ──────────────────────────────────────────────────────────
 export interface HostelOwner {
-  id:           string        // UUID — same as auth.users.id
-  full_name:    string
-  hostel_name:  string
-  phone:        string
-  hostel_otp:   string | null // 6-digit code for student registration (Phase 2)
-  created_at:   string        // ISO 8601 timestamp
+  id:                string        // UUID — same as auth.users.id
+  full_name:         string
+  hostel_name:       string
+  phone:             string
+  hostel_otp:        string | null // 6-digit code for student registration
+  upi_id:            string | null // Phase 2: UPI ID for payment
+  payment_qr_url:    string | null // Phase 2: uploaded QR image URL
+  payment_qr_note:   string | null // Phase 2: note shown with QR
+  created_at:        string        // ISO 8601 timestamp
+}
+
+// ── Notification (owner sees when student self-registers) ─────────────────
+export interface Notification {
+  id:         string
+  owner_id:   string
+  student_id: string | null
+  type:       'student_registered' | 'payment_confirmed' | string
+  message:    string
+  is_read:    boolean
+  meta:       Record<string, unknown> | null
+  created_at: string
+  // joined fields
+  student?:   { full_name: string; room_number: string; phone: string } | null
 }
  
 // ── Student ───────────────────────────────────────────────────────────────
@@ -34,7 +51,9 @@ export interface Student {
   monthly_due_day:    number         // 1-28 — the day of month rent is due
   rent_amount:        number         // INR
   is_active:          boolean
-  password_hash:      string | null  // null in MVP — Phase 2 only
+  approval_status:    'pending' | 'approved' | 'rejected'
+  password_hash:      string | null  // null in MVP
+  user_id:            string | null  // Phase 2: links to auth.users via Google OAuth
   created_at:         string
 }
  
@@ -81,4 +100,26 @@ export interface StudentFormData {
   date_of_joining:    string   // 'YYYY-MM-DD'
   monthly_due_day:    string   // string from form input — convert to number
   rent_amount:        string   // string from form input — convert to number
+}
+
+// ── Student Join Form (for self-registration via QR/OTP) ──────────────────
+export interface StudentJoinFormData {
+  hostel_otp:      string   // 6-digit code OR empty if coming via QR owner ID
+  owner_id?:       string   // set when coming via QR link (bypasses OTP input)
+  full_name:       string
+  phone:           string
+  room_number:     string
+  rent_amount?:    string
+  monthly_due_day?: string
+  aadhaar_number?: string
+  address?:        string
+}
+
+// ── Owner info enriched with student context (for student dashboard) ───────
+export interface OwnerPublicInfo {
+  hostel_name:     string
+  hostel_otp:      string | null
+  payment_qr_url:  string | null
+  payment_qr_note: string | null
+  upi_id:          string | null
 }

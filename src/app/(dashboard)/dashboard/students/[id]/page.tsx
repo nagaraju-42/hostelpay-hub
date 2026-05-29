@@ -10,14 +10,52 @@ import { StatusBadge, statusToBadgeType, statusLabel } from '@/components/mobile
 import { EditStudentSheet } from '@/components/students/EditStudentSheet'
 import type { StudentWithPayments } from '@/types'
 
+// ── Inline CopyButton component ───────────────────────────────────────────
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      toast.success('Phone number copied!')
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        background: 'none',
+        border: '1px solid #E2E8F0',
+        borderRadius: 8,
+        padding: '3px 8px',
+        cursor: 'pointer',
+        fontSize: 11,
+        color: copied ? '#059669' : '#64748B',
+        fontFamily: '"DM Sans", sans-serif',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        flexShrink: 0,
+        transition: 'color 0.2s, border-color 0.2s',
+        borderColor: copied ? '#A7F3D0' : '#E2E8F0',
+      }}
+      title="Copy phone number"
+    >
+      {copied ? '✅' : '📋'} {copied ? 'Copied' : 'Copy'}
+    </button>
+  )
+}
+
 export default function StudentProfilePage() {
   const { id } = useParams<{ id: string }>()
   const router  = useRouter()
 
-  const [student,     setStudent]     = useState<StudentWithPayments | null>(null)
-  const [loading,     setLoading]     = useState(true)
-  const [editOpen,    setEditOpen]    = useState(false)
-  const [deactivating,setDeactivating]= useState(false)
+  const [student,      setStudent]      = useState<StudentWithPayments | null>(null)
+  const [loading,      setLoading]      = useState(true)
+  const [editOpen,     setEditOpen]     = useState(false)
+  const [deactivating, setDeactivating] = useState(false)
+  const [approving,    setApproving]    = useState(false)
+  const [rejecting,    setRejecting]    = useState(false)
 
   async function fetchStudent() {
     const res = await fetch(`/api/students/${id}`)
@@ -39,6 +77,31 @@ export default function StudentProfilePage() {
     } else {
       toast.error('Failed to deactivate student.')
       setDeactivating(false)
+    }
+  }
+
+  async function handleApprove() {
+    setApproving(true)
+    const res = await fetch(`/api/students/${id}/approve`, { method: 'PATCH' })
+    if (res.ok) {
+      toast.success('Student approved!')
+      fetchStudent()
+    } else {
+      toast.error('Failed to approve student.')
+    }
+    setApproving(false)
+  }
+
+  async function handleReject() {
+    if (!confirm(`Are you sure you want to reject ${student?.full_name}? This will delete their pending request.`)) return
+    setRejecting(true)
+    const res = await fetch(`/api/students/${id}/approve`, { method: 'DELETE' })
+    if (res.ok) {
+      toast.success('Student rejected.')
+      router.push('/dashboard/students')
+    } else {
+      toast.error('Failed to reject student.')
+      setRejecting(false)
     }
   }
 
@@ -71,17 +134,24 @@ export default function StudentProfilePage() {
   nextDue.setDate(student.monthly_due_day)
   const nextDueStr = format(nextDue, 'd MMM')
 
-  const payStatus = (student as any).payment_status ?? 'upcoming'
+  const payStatus = (student as StudentWithPayments & { payment_status?: string }).payment_status ?? 'upcoming'
   const badgeType = statusToBadgeType(payStatus)
   const badgeLbl  = statusLabel(payStatus)
 
-  const CONTACT_ROWS = [
-    { icon: '📱', val: student.phone },
-    student.parent_phone ? { icon: '👤', val: `Parent: ${student.parent_phone}` } : null,
+  // WhatsApp message
+  const whatsappMsg = encodeURIComponent(
+    `Hi ${student.full_name}, your hostel rent of ₹${student.rent_amount} is due on the ${student.monthly_due_day}${getDaySuffix(student.monthly_due_day)} of this month. Please arrange payment at the earliest. - your hostel`
+  )
+  const whatsappUrl = `https://wa.me/91${student.phone.replace(/\D/g, '')}?text=${whatsappMsg}`
+
+  // Contact rows with optional copyable flag
+  const CONTACT_ROWS: { icon: string; val: string; copyable?: boolean }[] = [
+    { icon: '📱', val: student.phone, copyable: true },
+    ...(student.parent_phone ? [{ icon: '👤', val: `Parent: ${student.parent_phone}` }] : []),
     { icon: '📧', val: student.email },
-    student.aadhaar_number ? { icon: '🪪', val: `Aadhar: XXXX XXXX ${student.aadhaar_number.slice(-4)}` } : null,
-    student.address ? { icon: '🏠', val: student.address } : null,
-  ].filter(Boolean) as { icon: string; val: string }[]
+    ...(student.aadhaar_number ? [{ icon: '🪪', val: `Aadhar: XXXX XXXX ${student.aadhaar_number.slice(-4)}` }] : []),
+    ...(student.address ? [{ icon: '🏠', val: student.address }] : []),
+  ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -89,15 +159,17 @@ export default function StudentProfilePage() {
         title="Student profile"
         backHref="/dashboard/students"
         right={
-          <button
-            onClick={() => setEditOpen(true)}
-            style={{
-              background: 'rgba(255,255,255,0.15)', border: 'none',
-              borderRadius: 8, width: 32, height: 32,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', fontSize: 16,
-            }}
-          >✏️</button>
+          student.approval_status !== 'pending' && (
+            <button
+              onClick={() => setEditOpen(true)}
+              style={{
+                background: 'rgba(255,255,255,0.15)', border: 'none',
+                borderRadius: 8, width: 32, height: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', fontSize: 16,
+              }}
+            >✏️</button>
+          )
         }
       />
 
@@ -118,7 +190,11 @@ export default function StudentProfilePage() {
             Room {student.room_number} · Joined {format(new Date(student.date_of_joining), 'd MMM yyyy')}
           </div>
           <div style={{ marginTop: 10 }}>
-            <StatusBadge label={`Active · ${badgeLbl}`} type={badgeType} />
+            {student.approval_status === 'pending' ? (
+              <StatusBadge label="Pending Approval" type="purple" />
+            ) : (
+              <StatusBadge label={`Active · ${badgeLbl}`} type={badgeType} />
+            )}
           </div>
         </div>
 
@@ -151,47 +227,118 @@ export default function StudentProfilePage() {
 
           {/* Contact Details */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 11, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>CONTACT DETAILS</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 11, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>
+              CONTACT DETAILS
+            </div>
             {CONTACT_ROWS.map((c, i) => (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '7px 0',
                 borderBottom: i < CONTACT_ROWS.length - 1 ? '1px solid #F8FAFC' : 'none',
               }}>
-                <span style={{ fontSize: 15 }}>{c.icon}</span>
-                <span style={{ fontSize: 13, fontFamily: '"DM Sans", sans-serif', color: '#334155' }}>{c.val}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <span style={{ fontSize: 15 }}>{c.icon}</span>
+                  <span style={{ fontSize: 13, fontFamily: '"DM Sans"', color: '#334155', flex: 1 }}>{c.val}</span>
+                  {c.copyable && <CopyButton text={c.val} />}
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Action Buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+          {student.approval_status === 'pending' ? (
+            <div style={{ background: '#F3E8FF', borderRadius: 14, border: '1px solid #D8B4FE', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#6B21A8', fontFamily: '"DM Sans", sans-serif' }}>
+                ACTION REQUIRED
+              </div>
+              <p style={{ fontSize: 12, color: '#6B21A8', fontFamily: '"DM Sans", sans-serif', margin: 0 }}>
+                This student self-registered and is waiting for your approval to access the hostel portal.
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button
+                  onClick={handleApprove}
+                  disabled={approving || rejecting}
+                  style={{
+                    flex: 1, background: '#7E22CE', color: '#fff', border: 'none',
+                    borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700,
+                    fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
+                    opacity: approving ? 0.7 : 1,
+                  }}
+                >
+                  {approving ? 'Approving…' : '✅ Approve Student'}
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={approving || rejecting}
+                  style={{
+                    flex: 1, background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA',
+                    borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700,
+                    fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
+                    opacity: rejecting ? 0.7 : 1,
+                  }}
+                >
+                  {rejecting ? 'Rejecting…' : '❌ Reject'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Action Buttons — 3 buttons */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {/* Mark Paid */}
             <button
               onClick={() => router.push(`/dashboard/students/${id}/pay`)}
               style={{
                 background: '#0F2744', color: '#fff', border: 'none',
-                borderRadius: 12, padding: '13px 8px', cursor: 'pointer',
-                fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                minHeight: 44,
+                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 4, flexDirection: 'column',
               }}
-            >✅ Mark paid</button>
+            >
+              <span style={{ fontSize: 18 }}>✅</span>
+              <span>Mark Paid</span>
+            </button>
+            {/* WhatsApp */}
+            <button
+              onClick={() => window.open(whatsappUrl, '_blank')}
+              style={{
+                background: '#ECFDF5', color: '#065F46',
+                border: '1px solid #A7F3D0',
+                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 4, flexDirection: 'column',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>💬</span>
+              <span>WhatsApp</span>
+            </button>
+            {/* History */}
             <button
               onClick={() => router.push(`/dashboard/history`)}
               style={{
                 background: '#F8FAFC', color: '#334155',
                 border: '1px solid #E2E8F0',
-                borderRadius: 12, padding: '13px 8px', cursor: 'pointer',
-                fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                minHeight: 44,
+                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 4, flexDirection: 'column',
               }}
-            >📋 History</button>
+            >
+              <span style={{ fontSize: 18 }}>📋</span>
+              <span>History</span>
+            </button>
           </div>
 
           {/* Recent Payments */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 9, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>RECENT PAYMENTS</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 9, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>
+              RECENT PAYMENTS
+            </div>
             {student.payments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 12, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>No payments recorded yet</div>
+              <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 12, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>
+                No payments recorded yet
+              </div>
             ) : (
               student.payments.slice(0, 5).map((p, i) => (
                 <div key={p.id} style={{
@@ -222,7 +369,9 @@ export default function StudentProfilePage() {
 
           {/* Danger Zone */}
           <div style={{ background: '#FEF2F2', borderRadius: 14, border: '1px solid #FECACA', padding: '14px 16px', marginBottom: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>DANGER ZONE</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>
+              DANGER ZONE
+            </div>
             <p style={{ fontSize: 11, color: '#B91C1C', fontFamily: '"DM Sans", sans-serif', marginBottom: 10 }}>
               Deactivating removes this student from active lists. Payment history is never deleted.
             </p>
@@ -236,8 +385,12 @@ export default function StudentProfilePage() {
                 cursor: deactivating ? 'not-allowed' : 'pointer',
                 opacity: deactivating ? 0.7 : 1,
               }}
-            >{deactivating ? 'Deactivating…' : '🗑 Deactivate Student'}</button>
+            >
+              {deactivating ? 'Deactivating…' : '🗑 Deactivate Student'}
+            </button>
           </div>
+            </>
+          )}
         </div>
       </div>
 

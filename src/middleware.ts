@@ -4,9 +4,10 @@ import { createServerClient } from '@supabase/ssr'
 // ════════════════════════════════════════════════════════════════════════
 // ROUTE DEFINITIONS
 // ════════════════════════════════════════════════════════════════════════
-const PROTECTED_ROUTES  = ['/dashboard', '/students', '/export']
+const PROTECTED_OWNER_ROUTES = ['/dashboard']
+const PROTECTED_STUDENT_ROUTES = ['/s']
 const ADMIN_ROUTES      = ['/admin']
-const PUBLIC_ROUTES     = ['/login', '/reset-password', '/']
+const PUBLIC_ROUTES     = ['/login', '/reset-password', '/', '/qr', '/auth/callback']
  
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -35,13 +36,21 @@ export async function middleware(request: NextRequest) {
   // ── IMPORTANT: Always call getUser() to refresh expired tokens ──
   const { data: { user } } = await supabase.auth.getUser()
  
-  // ── RULE 1: Protect /dashboard and related routes ─────────────
-  const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r))
-  if (isProtected && !user) {
+  // ── RULE 1: Protect /dashboard (owner) routes ─────────────────────────
+  const isOwnerRoute = PROTECTED_OWNER_ROUTES.some(r => pathname.startsWith(r))
+  if (isOwnerRoute && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
- 
-  // ── RULE 2: Protect /admin routes ─────────────────────────────
+
+  // ── RULE 2: Protect /s (student) routes ───────────────────────────────
+  const isStudentRoute = PROTECTED_STUDENT_ROUTES.some(r => pathname.startsWith(r))
+  if (isStudentRoute && pathname !== '/s' && !user) {
+    const loginUrl = new URL('/s', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // ── RULE 3: Protect /admin routes ─────────────────────────────────────
   const isAdmin = ADMIN_ROUTES.some(r => pathname.startsWith(r))
   if (isAdmin) {
     if (!user) {
@@ -51,15 +60,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
- 
-  // ── RULE 3: Redirect logged-in users away from /login ─────────
+
+  // ── RULE 4: Redirect logged-in owners away from /login ────────────────
   if (pathname === '/login' && user) {
     if (user.email === process.env.SUPER_ADMIN_EMAIL) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
- 
+
   return supabaseResponse
 }
  

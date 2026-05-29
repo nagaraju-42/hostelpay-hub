@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import { MobileAvatar, initialsFromName, colorFromName } from '@/components/mobile/MobileAvatar'
 import { StatCard } from '@/components/mobile/StatCard'
 import { StatusBadge } from '@/components/mobile/StatusBadge'
+import { NotificationBell } from '@/components/mobile/NotificationBell'
 import type { DueTodayStudent } from '@/app/api/payments/due-today/route'
 import type { Payment } from '@/types'
 
@@ -109,12 +110,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', padding: 0 }}
-            title="Notifications"
-          >
-            🔔
-          </button>
+          <NotificationBell />
           <MobileAvatar initials={initials} color={avatarColor} size={34} />
         </div>
       </div>

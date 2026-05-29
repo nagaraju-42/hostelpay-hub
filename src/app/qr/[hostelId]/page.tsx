@@ -290,6 +290,16 @@ export default async function HostelQRPage({ params }: { params: Promise<Params>
             🏠 Join {hostel.hostel_name}
           </a>
 
+          {/* Login link for existing students */}
+          <div style={{ textAlign: 'center', marginTop: 8 }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
+              Already registered?{' '}
+              <a href="/s" style={{ color: '#0F2744', fontWeight: 700, textDecoration: 'underline' }}>
+                Login here
+              </a>
+            </p>
+          </div>
+
           {/* Footnote */}
           <p
             style={{

@@ -117,7 +117,7 @@ export default function SettingsPage() {
       setLoading(false)
 
       if (typeof window !== 'undefined') {
-        setQrUrl(`${window.location.origin}/qr/${user.id}`)
+        setQrUrl('https://hostelpay-hub-fcff.vercel.app/s')
       }
     }
     load()

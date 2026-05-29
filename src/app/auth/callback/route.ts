@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -31,6 +32,27 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // ── Silent Auto-Linking Flow ──────────────────────────────────────────
+      // If the owner manually added the student, their user_id is null.
+      // Auto-link them based on their Google email.
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && user.email) {
+        const { data: orphan } = await supabaseAdmin
+          .from('students')
+          .select('id')
+          .eq('email', user.email)
+          .is('user_id', null)
+          .limit(1)
+          .single()
+
+        if (orphan) {
+          await supabaseAdmin
+            .from('students')
+            .update({ user_id: user.id })
+            .eq('id', orphan.id)
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
     console.error('[/auth/callback] exchangeCodeForSession error:', error)

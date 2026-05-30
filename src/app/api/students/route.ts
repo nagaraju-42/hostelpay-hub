@@ -116,8 +116,24 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     )
   }
- 
-  // ── Insert ──────────────────────────────────────────────────────────────
+
+  // ── Explicit phone duplicate check (friendly error before DB fires) ──────
+  const { data: existingByPhone } = await supabase
+    .from('students')
+    .select('id, full_name')
+    .eq('owner_id', user.id)
+    .eq('phone', body.phone.trim())
+    .eq('is_active', true)
+    .limit(1)
+
+  if (existingByPhone && existingByPhone.length > 0) {
+    return NextResponse.json<ApiError>(
+      { error: `A student with phone ${body.phone.trim()} already exists (${existingByPhone[0].full_name}). Each student must have a unique phone number.` },
+      { status: 409 }
+    )
+  }
+
+
   const { data: newStudent, error: insertError } = await supabase
     .from('students')
     .insert({

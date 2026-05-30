@@ -208,6 +208,17 @@ export default function StudentsPage() {
   // ── TopBar right slot ──────────────────────────────────────────────────
   const topBarRight = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      {/* Import CSV */}
+      <button
+        onClick={() => router.push('/dashboard/students/import')}
+        title="Import from CSV"
+        style={{
+          background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+          width: 32, height: 32,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', fontSize: 15, color: '#fff',
+        }}
+      >📥</button>
       {/* Grid toggle */}
       <button
         onClick={() => setView('grid')}
@@ -245,6 +256,8 @@ export default function StudentsPage() {
       >➕</button>
     </div>
   )
+
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>

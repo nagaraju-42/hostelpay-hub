@@ -17,7 +17,7 @@ const studentSchema = z.object({
   phone:              z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number.'),
   parent_phone:       z.string().regex(/^[6-9]\d{9}$/, 'Enter valid 10-digit number.').or(z.literal('')),
   emergency_contact:  z.string().optional(),
-  email:              z.string().email('Enter a valid email address.'),
+  email:              z.string().email('Enter a valid email address.').or(z.literal('')).optional(),
   room_number:        z.string().min(1, 'Room number is required.'),
   age:                z.string().optional(),
   address:            z.string().optional(),
@@ -122,13 +122,7 @@ export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentShe
               </FormItem>
             )} />
  
-            <FormField control={form.control} name='email' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email *</FormLabel>
-                <FormControl><Input type='email' placeholder='student@example.com' {...field} className='h-11' /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+            {/* email moved to optional section below */}
  
             <div className='grid grid-cols-2 gap-3'>
               <FormField control={form.control} name='monthly_due_day' render={({ field }) => (
@@ -158,6 +152,14 @@ export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentShe
             {/* OPTIONAL FIELDS */}
             <p className='text-xs font-semibold text-slate-400 uppercase tracking-wider pt-2'>Optional Info</p>
  
+            <FormField control={form.control} name='email' render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email <span style={{color:'#94A3B8', fontWeight:400}}>(optional — for student login)</span></FormLabel>
+                <FormControl><Input type='email' placeholder='student@gmail.com' {...field} className='h-11' /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
             <FormField control={form.control} name='parent_phone' render={({ field }) => (
               <FormItem>
                 <FormLabel>Parent Mobile</FormLabel>

@@ -40,7 +40,6 @@ export default function AddStudentPage() {
   function validateStep1() {
     const e: Partial<FormData> = {}
     if (!form.full_name.trim())  e.full_name   = 'Name is required'
-    if (!form.email.trim() || !form.email.includes('@')) e.email = 'Valid email required'
     if (!form.room_number.trim()) e.room_number = 'Room number required'
     if (!form.phone.trim() || !/^[6-9]\d{9}$/.test(form.phone.trim())) e.phone = 'Valid 10-digit phone required'
     if (!form.date_of_joining) e.date_of_joining = 'Join date required'
@@ -110,11 +109,7 @@ export default function AddStudentPage() {
               <input value={form.full_name} onChange={e => update('full_name', e.target.value)} placeholder="Ravi Teja Reddy" style={inputStyle(!!errors.full_name)} />
               {errors.full_name && <p style={errorStyle}>{errors.full_name}</p>}
             </div>
-            <div>
-              <label style={labelStyle}>EMAIL *</label>
-              <input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="ravi.teja@gmail.com" style={inputStyle(!!errors.email)} />
-              {errors.email && <p style={errorStyle}>{errors.email}</p>}
-            </div>
+            {/* email is optional — shown in step 2 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
               <div>
                 <label style={labelStyle}>AGE</label>
@@ -173,6 +168,11 @@ export default function AddStudentPage() {
         {step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
+              <label style={labelStyle}>EMAIL <span style={{ fontWeight: 400, color: '#94A3B8' }}>(OPTIONAL — needed only for student login)</span></label>
+              <input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="ravi.teja@gmail.com" style={inputStyle(false)} />
+              <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>Leave blank if student doesn't have or won't use the app.</p>
+            </div>
+            <div>
               <label style={labelStyle}>ADDRESS (OPTIONAL)</label>
               <textarea
                 value={form.address}
@@ -200,12 +200,12 @@ export default function AddStudentPage() {
               <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px', marginBottom: 12 }}>REVIEW DETAILS</div>
               {[
                 ['Name',    form.full_name],
-                ['Email',   form.email],
                 ['Room',    form.room_number],
                 ['Phone',   form.phone],
+                form.email ? ['Email', form.email] : null,
                 ['Rent',    `₹${form.rent_amount}/mo`],
                 ['Due day', `${form.monthly_due_day}th of month`],
-              ].map(([lbl, val]) => (
+              ].filter((x): x is string[] => x !== null).map(([lbl, val]) => (
                 <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F1F5F9' }}>
                   <span style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>{lbl}</span>
                   <span style={{ fontSize: 12, fontWeight: 600, color: '#1E293B', fontFamily: '"DM Sans", sans-serif' }}>{val || '—'}</span>

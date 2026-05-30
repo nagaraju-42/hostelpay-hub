@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
   if (!body.phone?.trim() || !/^[6-9]\d{9}$/.test(body.phone.trim()))
     errors.push('Phone must be a valid 10-digit Indian mobile number starting with 6-9.')
  
-  if (!body.email?.trim() || !body.email.includes('@'))
-    errors.push('A valid email address is required.')
+  // email is optional — if not provided, we auto-generate a placeholder
+  // so the student can still self-register later via QR (matched by phone)
  
   if (!body.room_number?.trim())
     errors.push('Room number is required.')
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       phone:             body.phone.trim(),
       parent_phone:      body.parent_phone?.trim() || null,
       emergency_contact: body.emergency_contact?.trim() || null,
-      email:             body.email.trim().toLowerCase(),
+      email:             body.email?.trim().toLowerCase() || `${body.phone.trim()}@hostelpay.local`,
       room_number:       body.room_number.trim(),
       age:               body.age ? parseInt(body.age) : null,
       address:           body.address?.trim() || null,
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/students]', insertError)
     if (insertError.code === '23505') {  // unique constraint
       return NextResponse.json<ApiError>(
-        { error: 'A student with this email already exists in your hostel.' },
+        { error: 'A student with this phone number already exists in your hostel.' },
         { status: 409 }
       )
     }

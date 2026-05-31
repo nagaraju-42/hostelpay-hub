@@ -18,7 +18,7 @@ export function StatCard({ value, label, color = '#0F2744' }: StatCardProps) {
     >
       <div
         style={{
-          fontSize: '20px',
+          fontSize: '26px',
           fontWeight: 700,
           color,
           fontFamily: '"DM Serif Display", serif',

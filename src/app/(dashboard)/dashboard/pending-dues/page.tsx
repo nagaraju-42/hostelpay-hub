@@ -104,7 +104,7 @@ export default function PendingDuesPage() {
               Total Pending
             </div>
             <div style={{
-              fontSize: 34, fontWeight: 700, color: stats.totalOwed > 0 ? '#F87171' : '#34D399',
+              fontSize: 42, fontWeight: 700, color: stats.totalOwed > 0 ? '#F87171' : '#34D399',
               fontFamily: '"DM Serif Display", serif', lineHeight: 1.1, marginTop: 2,
             }}>
               {loading ? '…' : fmtMoney(stats.totalOwed)}
@@ -115,7 +115,7 @@ export default function PendingDuesPage() {
               Collected this month
             </div>
             <div style={{
-              fontSize: 20, fontWeight: 700, color: '#34D399',
+              fontSize: 26, fontWeight: 700, color: '#34D399',
               fontFamily: '"DM Serif Display", serif',
             }}>
               {loading ? '…' : fmtMoney(stats.totalCollected)}
@@ -135,7 +135,7 @@ export default function PendingDuesPage() {
               flex: 1, background: 'rgba(255,255,255,0.07)', borderRadius: 10,
               padding: '8px 6px', textAlign: 'center',
             }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: p.col, fontFamily: '"DM Serif Display", serif' }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: p.col, fontFamily: '"DM Serif Display", serif' }}>
                 {loading ? '…' : p.val}
               </div>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontFamily: '"DM Sans", sans-serif', marginTop: 1 }}>
@@ -300,7 +300,7 @@ export default function PendingDuesPage() {
                     {/* Amount owed */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{
-                        fontSize: isPaid ? 14 : 18, fontWeight: 700,
+                        fontSize: isPaid ? 16 : 22, fontWeight: 700,
                         color: isPaid ? '#059669' : '#DC2626',
                         fontFamily: '"DM Serif Display", serif',
                       }}>

@@ -165,7 +165,7 @@ export default function RoomDetailPage() {
                       Due on {s.monthly_due_day}{getDaySuffix(s.monthly_due_day)} each month
                     </span>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#0F2744', fontFamily: '"DM Serif Display", serif' }}>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: '#0F2744', fontFamily: '"DM Serif Display", serif' }}>
                     ₹{Number(s.rent_amount).toLocaleString('en-IN')}
                   </span>
                 </div>

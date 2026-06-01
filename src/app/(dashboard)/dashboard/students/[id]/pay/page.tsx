@@ -96,7 +96,7 @@ export default function RecordPaymentPage() {
           {/* Amount card */}
           <div style={{ margin: '-14px 16px 0', background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '18px', textAlign: 'center', position: 'relative', zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
             <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>Amount due</div>
-            <div style={{ fontSize: 32, fontWeight: 700, fontFamily: '"DM Serif Display", serif', letterSpacing: -1, marginTop: 4, color: '#1E293B' }}>
+            <div style={{ fontSize: 42, fontWeight: 700, fontFamily: '"DM Serif Display", serif', letterSpacing: -1, marginTop: 4, color: '#1E293B' }}>
               ₹{Number(student.rent_amount).toLocaleString('en-IN')}
             </div>
             <div style={{ fontSize: 11, color: '#059669', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>✅ No overdue penalties</div>
@@ -173,7 +173,7 @@ export default function RecordPaymentPage() {
                 background: submitting ? '#D97706' : '#F59E0B',
                 color: '#111',
                 border: 'none', padding: '15px', borderRadius: 12,
-                fontSize: 14, fontWeight: 700,
+                fontSize: 18, fontWeight: 700,
                 fontFamily: '"DM Sans", sans-serif',
                 cursor: submitting ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

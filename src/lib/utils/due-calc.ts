@@ -62,14 +62,15 @@ export function isOverdue(
   overdueThresholdDays: number = 3,
   referenceDate: Date = new Date()
 ): boolean {
-  const today    = new Date(referenceDate)
-  const todayDay = today.getDate()
- 
-  // Not overdue if due date hasn't passed yet
-  if (todayDay < dueDay) return false
- 
-  // Not overdue if within grace period
-  const daysPastDue = todayDay - dueDay
+  const today = new Date(referenceDate)
+  today.setHours(0, 0, 0, 0)
+  
+  const cycleStart = getCurrentCycleDueDate(dueDay, referenceDate)
+  cycleStart.setHours(0, 0, 0, 0)
+  
+  const daysPastDue = Math.floor((today.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24))
+  
+  // Not overdue if within grace period (or if cycleStart is in the future, which is daysPastDue < 0)
   if (daysPastDue < overdueThresholdDays) return false
  
   // Overdue only if they haven't paid this cycle
@@ -98,6 +99,41 @@ export function getNextDueDate(dueDay: number, referenceDate: Date = new Date())
     return new Date(nextYear, nextMonth, dueDay)
   }
 }
+
+// ── Calculate total unpaid months ─────────────────────────────────────────
+export function calculateMonthsUnpaid(
+  dueDay: number,
+  joinDateString: string,
+  payments: Payment[],
+  referenceDate: Date = new Date()
+): number {
+  let totalCycles = 0
+  const joinDate = new Date(joinDateString)
+  joinDate.setHours(0, 0, 0, 0)
+  
+  const today = new Date(referenceDate)
+  today.setHours(0, 0, 0, 0)
+  
+  for (let i = 0; i < 12; i++) {
+    const checkDate = new Date(today)
+    checkDate.setMonth(checkDate.getMonth() - i)
+    checkDate.setHours(0, 0, 0, 0)
+    
+    const cycleDue = getCurrentCycleDueDate(dueDay, checkDate)
+    cycleDue.setHours(0, 0, 0, 0)
+    
+    if (cycleDue > today) continue
+    
+    // 15 days leniency for early joiners to not be charged for a cycle they barely touched
+    const joinLeniency = new Date(joinDate)
+    joinLeniency.setDate(joinLeniency.getDate() - 15)
+    if (cycleDue < joinLeniency) break
+    
+    totalCycles++
+  }
+
+  return Math.max(0, totalCycles - payments.length)
+}
  
 // ── Classify a student's payment status ──────────────────────────────────
 export type PaymentStatus = 'overdue' | 'due_today' | 'paid' | 'upcoming'
@@ -105,10 +141,21 @@ export type PaymentStatus = 'overdue' | 'due_today' | 'paid' | 'upcoming'
 export function getPaymentStatus(
   dueDay: number,
   payments: Payment[],
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
+  joinDateString?: string
 ): PaymentStatus {
-  if (hasPaidThisCycle(dueDay, payments, referenceDate)) return 'paid'
-  if (isOverdue(dueDay, payments, 3, referenceDate))     return 'overdue'
-  if (isDueToday(dueDay, referenceDate))                  return 'due_today'
-  return 'upcoming'
+  let baseStatus: PaymentStatus = 'upcoming'
+  if (hasPaidThisCycle(dueDay, payments, referenceDate)) baseStatus = 'paid'
+  else if (isOverdue(dueDay, payments, 3, referenceDate)) baseStatus = 'overdue'
+  else if (isDueToday(dueDay, referenceDate)) baseStatus = 'due_today'
+
+  if (joinDateString) {
+    const monthsUnpaid = calculateMonthsUnpaid(dueDay, joinDateString, payments, referenceDate)
+    // If they owe for past cycles, force overdue
+    if ((monthsUnpaid > 1) || (monthsUnpaid === 1 && baseStatus === 'paid')) {
+      return 'overdue'
+    }
+  }
+  
+  return baseStatus
 }

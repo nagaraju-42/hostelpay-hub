@@ -253,7 +253,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
                         {amt}
                       </div>
                       <StatusBadge label="Paid" type="green" />

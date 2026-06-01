@@ -210,6 +210,7 @@ export default function StudentsPage() {
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       {/* Import CSV */}
       <button
+        suppressHydrationWarning
         onClick={() => router.push('/dashboard/students/import')}
         title="Import from CSV"
         style={{
@@ -221,6 +222,7 @@ export default function StudentsPage() {
       >📥</button>
       {/* Grid toggle */}
       <button
+        suppressHydrationWarning
         onClick={() => setView('grid')}
         title="Grid view"
         style={{
@@ -233,6 +235,7 @@ export default function StudentsPage() {
       >⊞</button>
       {/* List toggle */}
       <button
+        suppressHydrationWarning
         onClick={() => setView('list')}
         title="List view"
         style={{
@@ -245,6 +248,7 @@ export default function StudentsPage() {
       >☰</button>
       {/* Add student */}
       <button
+        suppressHydrationWarning
         onClick={() => setSheetOpen(true)}
         title="Add student"
         style={{
@@ -277,6 +281,7 @@ export default function StudentsPage() {
         }}>
           <span style={{ fontSize: 16 }}>🔍</span>
           <input
+            suppressHydrationWarning
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={view === 'grid' ? 'Search rooms or students…' : 'Search name, room, phone…'}

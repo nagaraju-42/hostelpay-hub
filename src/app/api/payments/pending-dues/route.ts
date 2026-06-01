@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthSession } from '@/lib/auth'
-import { getCurrentCycleDueDate, hasPaidThisCycle } from '@/lib/utils/due-calc'
+import { calculateMonthsUnpaid, getPaymentStatus } from '@/lib/utils/due-calc'
 import type { ApiSuccess, ApiError, Payment } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -78,36 +78,7 @@ export async function GET(_request: NextRequest) {
     const rent = Number(s.rent_amount)
     const dueDay = s.monthly_due_day
 
-    // Calculate months unpaid by walking backwards from current cycle
-    let monthsUnpaid = 0
-    const joinDate = new Date(s.date_of_joining)
-    
-    // Check up to 12 cycles back
-    for (let i = 0; i < 12; i++) {
-      const checkDate = new Date(today)
-      checkDate.setMonth(checkDate.getMonth() - i)
-      
-      // Don't count cycles before the student joined
-      if (checkDate < joinDate) break
-      
-      const cycleDue = getCurrentCycleDueDate(dueDay, checkDate)
-      
-      // Only count if the cycle's due date has passed
-      if (cycleDue > today) continue
-      
-      const hasPaid = studentPayments.some(p => {
-        const paidAt = new Date(p.paid_at)
-        // Payment covers this cycle if it was made on or after the cycle due date
-        // but before the next cycle
-        const nextCycleDue = new Date(cycleDue)
-        nextCycleDue.setMonth(nextCycleDue.getMonth() + 1)
-        return paidAt >= cycleDue && paidAt < nextCycleDue
-      })
-
-      if (!hasPaid) {
-        monthsUnpaid++
-      }
-    }
+    const monthsUnpaid = calculateMonthsUnpaid(dueDay, s.date_of_joining, studentPayments, today)
 
     // Last payment info
     const lastPayment = studentPayments.length > 0 ? studentPayments[0] : null
@@ -116,14 +87,7 @@ export async function GET(_request: NextRequest) {
       : null
 
     // Status
-    let status: PendingDueStudent['status'] = 'upcoming'
-    if (hasPaidThisCycle(dueDay, studentPayments, today)) {
-      status = 'paid'
-    } else if (todayDay >= dueDay && (todayDay - dueDay) >= 3) {
-      status = 'overdue'
-    } else if (todayDay === dueDay) {
-      status = 'due_today'
-    }
+    const status = getPaymentStatus(dueDay, studentPayments, today, s.date_of_joining)
 
     return {
       id: s.id,

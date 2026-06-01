@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   const enriched = students.map(s => ({
     ...s,
-    payment_status: getPaymentStatus(s.monthly_due_day, paymentsByStudent.get(s.id) ?? [], today),
+    payment_status: getPaymentStatus(s.monthly_due_day, paymentsByStudent.get(s.id) ?? [], today, s.date_of_joining),
   }))
 
   return NextResponse.json<ApiSuccess<(Student & { payment_status: string })[]>>({ data: enriched })

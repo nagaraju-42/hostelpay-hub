@@ -300,7 +300,7 @@ export default function PendingDuesPage() {
                     {/* Amount owed */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{
-                        fontSize: isPaid ? 16 : 22, fontWeight: 700,
+                        fontSize: isPaid ? 16 : 26, fontWeight: 700,
                         color: isPaid ? '#059669' : '#DC2626',
                         fontFamily: '"DM Serif Display", serif',
                       }}>

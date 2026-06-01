@@ -77,7 +77,7 @@ export default function HistoryPage() {
       }}>
         <div style={{ background: '#fff', borderRadius: 12, padding: '10px 14px', border: '1px solid #E2E8F0' }}>
           <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>Total collected</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
             {loading ? '…' : `₹${totalCollected.toLocaleString('en-IN')}`}
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function HistoryPage() {
                           </div>
                         </div>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
                         +₹{Number(p.amount_paid).toLocaleString('en-IN')}
                       </div>
                     </div>

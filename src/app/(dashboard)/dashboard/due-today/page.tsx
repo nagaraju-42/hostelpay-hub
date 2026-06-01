@@ -168,7 +168,7 @@ export default function DueTodayPage() {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
                         ₹{Number(s.rent_amount).toLocaleString('en-IN')}
                       </div>
                       <StatusBadge label="Done" type="green" />

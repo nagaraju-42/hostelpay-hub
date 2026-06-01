@@ -218,7 +218,7 @@ export default function StudentProfilePage() {
               borderRight: idx < 2 ? '1px solid #F1F5F9' : 'none',
             }}>
               <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>{item.lbl}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: item.col, fontFamily: '"DM Serif Display", serif', marginTop: 2 }}>{item.val}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: item.col, fontFamily: '"DM Serif Display", serif', marginTop: 2 }}>{item.val}</div>
             </div>
           ))}
         </div>
@@ -359,7 +359,7 @@ export default function StudentProfilePage() {
                       {p.payment_mode.toUpperCase()} · {format(new Date(p.paid_at), 'd MMM')}
                     </div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
                     ₹{Number(p.amount_paid).toLocaleString('en-IN')}
                   </div>
                 </div>

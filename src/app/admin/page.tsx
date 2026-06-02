@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Users, IndianRupee, Building2, ExternalLink, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Plus, Users, IndianRupee, Building2, ExternalLink, TrendingUp, AlertTriangle, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddOwnerDialog } from '@/components/admin/AddOwnerDialog'
 import type { OwnerWithStats } from '@/app/api/admin/owners/route'
@@ -106,18 +106,32 @@ export default function AdminDashboardPage() {
             Manage all registered hostel owners &amp; monitor platform health
           </p>
         </div>
-        <button
-          onClick={() => setDialogOpen(true)}
-          style={{
-            background: '#F59E0B', color: '#111', border: 'none',
-            padding: '10px 18px', borderRadius: 10,
-            fontSize: 13, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-            whiteSpace: 'nowrap', flexShrink: 0,
-          }}
-        >
-          <Plus size={15} /> Add New Owner
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Link
+            href="/admin/support"
+            style={{
+              background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)',
+              padding: '10px 18px', borderRadius: 10, textDecoration: 'none',
+              fontSize: 13, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
+              display: 'flex', alignItems: 'center', gap: 8,
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >
+            <MessageSquare size={15} /> Support Tickets
+          </Link>
+          <button
+            onClick={() => setDialogOpen(true)}
+            style={{
+              background: '#F59E0B', color: '#111', border: 'none',
+              padding: '10px 18px', borderRadius: 10,
+              fontSize: 13, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >
+            <Plus size={15} /> Add New Owner
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}

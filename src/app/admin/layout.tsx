@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, supabaseAdmin } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
 
 const NAV_LINKS = [
   { href: '/admin',           icon: '📊', label: 'Platform Overview'   },
@@ -18,6 +19,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!user || user.email !== process.env.SUPER_ADMIN_EMAIL) {
     redirect('/login')
   }
+
+  // Fetch count of open support tickets
+  const { count: openTicketsCount } = await supabaseAdmin
+    .from('support_tickets')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'open')
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a1628', display: 'flex' }}>
@@ -78,6 +85,33 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               {link.label}
             </Link>
           ))}
+
+          <Link
+            href="/admin/support"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+              fontSize: 13, fontFamily: '"DM Sans", sans-serif',
+              color: 'rgba(255,255,255,0.7)',
+              textDecoration: 'none',
+              transition: 'background 0.15s, color 0.15s',
+              justifyContent: 'space-between'
+            }}
+            className="admin-nav-link"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🎫</span>
+              Support Tickets
+            </div>
+            {openTicketsCount !== null && openTicketsCount > 0 && (
+              <span style={{
+                background: '#EF4444', color: '#fff', fontSize: 10, fontWeight: 700,
+                padding: '2px 6px', borderRadius: 10, display: 'inline-block'
+              }}>
+                {openTicketsCount}
+              </span>
+            )}
+          </Link>
         </nav>
 
         {/* User info */}
@@ -89,6 +123,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           wordBreak: 'break-all',
         }}>
           {user.email}
+          <AdminLogoutButton />
         </div>
       </aside>
 

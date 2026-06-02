@@ -76,6 +76,7 @@ export interface Payment {
 // ── Student with Payment History (used in profile page) ──────────────────
 export interface StudentWithPayments extends Student {
   payments: Payment[]
+  manual_charges?: ManualCharge[]
 }
  
 // ── API Response Helpers ──────────────────────────────────────────────────
@@ -126,4 +127,15 @@ export interface OwnerPublicInfo {
   payment_qr_note: string | null
   upi_id:          string | null
   phone:           string
+}
+
+// ── Manual Charge (for Ledger Adjustments) ────────────────────────────────
+export interface ManualCharge {
+  id:          string
+  student_id:  string
+  owner_id:    string
+  amount:      number   // Positive for charge, Negative for discount
+  description: string
+  date:        string
+  created_at:  string
 }

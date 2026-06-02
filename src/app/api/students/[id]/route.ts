@@ -33,10 +33,18 @@ export async function GET(
     .eq('student_id', id)
     .eq('owner_id', user.id)
     .order('paid_at', { ascending: false })
+
+  const { data: manual_charges } = await supabase
+    .from('manual_charges')
+    .select('*')
+    .eq('student_id', id)
+    .eq('owner_id', user.id)
+    .order('date', { ascending: false })
  
   const result: StudentWithPayments = {
     ...student,
     payments: payments ?? [],
+    manual_charges: manual_charges ?? []
   }
  
   return NextResponse.json<ApiSuccess<StudentWithPayments>>({ data: result })

@@ -8,7 +8,10 @@ import { TopBar } from '@/components/mobile/TopBar'
 import { MobileAvatar, initialsFromName, colorFromName } from '@/components/mobile/MobileAvatar'
 import { StatusBadge, statusToBadgeType, statusLabel } from '@/components/mobile/StatusBadge'
 import { EditStudentSheet } from '@/components/students/EditStudentSheet'
+import { AddManualChargeSheet } from '@/components/students/AddManualChargeSheet'
 import type { StudentWithPayments } from '@/types'
+import { generateStudentLedger, getTodayIST } from '@/lib/utils/due-calc'
+import { downloadStudentLedgerPDF } from '@/lib/utils/pdf'
 
 // ── Inline CopyButton component ───────────────────────────────────────────
 function CopyButton({ text }: { text: string }) {
@@ -56,6 +59,7 @@ export default function StudentProfilePage() {
   const [deactivating, setDeactivating] = useState(false)
   const [approving,    setApproving]    = useState(false)
   const [rejecting,    setRejecting]    = useState(false)
+  const [showChargeSheet, setShowChargeSheet] = useState(false)
 
   async function fetchStudent() {
     const res = await fetch(`/api/students/${id}`)
@@ -128,6 +132,28 @@ export default function StudentProfilePage() {
   const getDaySuffix = (d: number) => {
     if (d >= 11 && d <= 13) return 'th'
     return ['th','st','nd','rd'][(d % 10 < 4) ? d % 10 : 0]
+  }
+
+  async function handleDownloadLedger() {
+    if (!student) return
+    const ledger = generateStudentLedger(
+      student.rent_amount,
+      student.monthly_due_day,
+      student.date_of_joining,
+      student.payments,
+      getTodayIST(),
+      student.date_of_leaving,
+      student.manual_charges
+    )
+    await downloadStudentLedgerPDF(
+      id,
+      'Hostel Statement',
+      student.full_name,
+      student.room_number,
+      student.date_of_joining,
+      student.rent_amount,
+      ledger
+    )
   }
 
   const nextDue = new Date()
@@ -251,6 +277,18 @@ export default function StudentProfilePage() {
             ))}
           </div>
 
+          <button
+            onClick={handleDownloadLedger}
+            style={{
+              background: '#0F2744', color: '#fff',
+              border: 'none', padding: '14px', borderRadius: 12,
+              fontSize: 14, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              minHeight: 50, marginTop: 4, width: '100%'
+            }}
+          >
+            📄 Download Ledger PDF
+          </button>
           {student.approval_status === 'pending' ? (
             <div style={{ background: '#F3E8FF', borderRadius: 14, border: '1px solid #D8B4FE', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#6B21A8', fontFamily: '"DM Sans", sans-serif' }}>
@@ -303,6 +341,20 @@ export default function StudentProfilePage() {
             >
               <span style={{ fontSize: 18 }}>✅</span>
               <span>Mark Paid</span>
+            </button>
+            {/* Add Charge */}
+            <button
+              onClick={() => setShowChargeSheet(true)}
+              style={{
+                background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA',
+                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 4, flexDirection: 'column',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>✏️</span>
+              <span>Add Charge</span>
             </button>
             {/* WhatsApp */}
             <button
@@ -407,6 +459,12 @@ export default function StudentProfilePage() {
         open={editOpen}
         onOpenChange={setEditOpen}
         onSuccess={() => { setEditOpen(false); fetchStudent() }}
+      />
+      <AddManualChargeSheet
+        studentId={id}
+        open={showChargeSheet}
+        onOpenChange={setShowChargeSheet}
+        onAdded={fetchStudent}
       />
     </div>
   )

@@ -46,6 +46,7 @@ interface MarkPaidBody {
   amount_paid:  number
   payment_mode: 'cash' | 'upi' | 'bank'
   notes?:       string
+  date?:        string
 }
  
 export async function POST(request: NextRequest) {
@@ -85,19 +86,31 @@ export async function POST(request: NextRequest) {
  
   // ── Check for duplicate payment (double-click prevention) ───────────────
   const today = getTodayIST()
-  const fiveMinutesAgo = new Date(today.getTime() - 5 * 60000)
+  const tenSecondsAgo = new Date(today.getTime() - 10000)
  
+  // We check existing payments inserted in the last 10 seconds to prevent true double-clicks.
   const { data: existingPayments } = await supabase
     .from('payments')
     .select('id')
     .eq('student_id', body.student_id)
     .eq('amount_paid', body.amount_paid)
-    .gte('paid_at', fiveMinutesAgo.toISOString())
+    .gte('paid_at', tenSecondsAgo.toISOString())
  
   if (existingPayments && existingPayments.length > 0) {
     return NextResponse.json<ApiError>({
-      error: `A payment of ₹${body.amount_paid} was already recorded for ${student.full_name} a few minutes ago. Please avoid double-clicking.`
+      error: `A payment of ₹${body.amount_paid} was just recorded. Please wait a moment before adding another.`
     }, { status: 409 })
+  }
+ 
+  // ── Determine Payment Date ──────────────────────────────────────────────
+  let finalPaidAt = today
+  if (body.date) {
+    const [y, m, d] = body.date.split('-').map(Number)
+    if (y && m && d) {
+      if (y !== today.getFullYear() || (m - 1) !== today.getMonth() || d !== today.getDate()) {
+        finalPaidAt = new Date(y, m - 1, d, 12, 0, 0) // Noon on that day
+      }
+    }
   }
  
   // ── Determine the due_date this payment covers ──────────────────────────
@@ -113,7 +126,7 @@ export async function POST(request: NextRequest) {
       payment_mode: body.payment_mode,
       due_date:     dueDate.toISOString().split('T')[0],
       notes:        body.notes?.trim() || null,
-      paid_at:      today.toISOString(),
+      paid_at:      finalPaidAt.toISOString(),
     })
     .select()
     .single()

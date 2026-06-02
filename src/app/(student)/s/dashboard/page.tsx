@@ -6,8 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { StudentBottomNav } from '@/components/mobile/StudentBottomNav'
 import { StatusBadge } from '@/components/mobile/StatusBadge'
-import { calculateLedger, getPaymentStatus, getTodayIST } from '@/lib/utils/due-calc'
-import type { Student, Payment, OwnerPublicInfo } from '@/types'
+import { calculateLedger, getPaymentStatus, getTodayIST, getPendingMonths, type PendingMonth, generateStudentLedger } from '@/lib/utils/due-calc'
+import { downloadStudentLedgerPDF } from '@/lib/utils/pdf'
+import type { Student, Payment, OwnerPublicInfo, ManualCharge } from '@/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function getOrdinal(n: number): string {
@@ -96,6 +97,7 @@ export default function StudentDashboardPage() {
 
   const [meData, setMeData] = useState<MeResponse | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
+  const [manualCharges, setManualCharges] = useState<ManualCharge[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -113,9 +115,10 @@ export default function StudentDashboardPage() {
     setLoading(true)
     setError(null)
     try {
-      const [meRes, paymentsRes] = await Promise.all([
+      const [meRes, paymentsRes, chargesRes] = await Promise.all([
         fetch('/api/student/me', { cache: 'no-store' }),
         fetch('/api/student/payments'),
+        fetch('/api/student/charges'),
       ])
 
       if (meRes.status === 401) { router.replace('/s'); return }
@@ -133,6 +136,10 @@ export default function StudentDashboardPage() {
         const pJson = await paymentsRes.json()
         setPayments(pJson.data || [])
       }
+      if (chargesRes.ok) {
+        const cJson = await chargesRes.json()
+        setManualCharges(cJson.data || [])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -147,6 +154,8 @@ export default function StudentDashboardPage() {
   let ledger = null
   let pStatus = null
   
+  let pendingMonths: PendingMonth[] = []
+  
   if (student) {
     const today = getTodayIST()
     ledger = calculateLedger(
@@ -154,9 +163,50 @@ export default function StudentDashboardPage() {
       student.monthly_due_day,
       student.date_of_joining,
       payments,
-      today
+      today,
+      student.date_of_leaving,
+      manualCharges
     )
-    pStatus = getPaymentStatus(student.rent_amount, student.monthly_due_day, student.date_of_joining, payments, today)
+    pStatus = getPaymentStatus(
+      student.rent_amount,
+      student.monthly_due_day,
+      student.date_of_joining,
+      payments,
+      today,
+      student.date_of_leaving,
+      manualCharges
+    )
+    pendingMonths = getPendingMonths(
+      student.rent_amount,
+      student.monthly_due_day,
+      student.date_of_joining,
+      payments,
+      today,
+      student.date_of_leaving,
+      manualCharges
+    )
+  }
+
+  async function handleDownloadLedger() {
+    if (!student) return
+    const fullLedger = generateStudentLedger(
+      student.rent_amount,
+      student.monthly_due_day,
+      student.date_of_joining,
+      payments,
+      getTodayIST(),
+      student.date_of_leaving,
+      manualCharges
+    )
+    await downloadStudentLedgerPDF(
+      student.id,
+      hostel_name || 'Hostel',
+      student.full_name,
+      student.room_number,
+      student.date_of_joining,
+      student.rent_amount,
+      fullLedger
+    )
   }
 
   function getBadgeType(s: string) {
@@ -335,28 +385,63 @@ export default function StudentDashboardPage() {
               </p>
 
               {/* Rent */}
-              <p
-                style={{
-                  margin: '0 0 14px',
-                  fontFamily: '"DM Serif Display", serif',
-                  fontSize: 40,
-                  color: '#F59E0B',
-                  lineHeight: 1,
-                }}
-              >
-                ₹{student?.rent_amount.toLocaleString('en-IN') || '—'}
-                <span
+              {pendingMonths.length > 0 ? (
+                <div style={{ marginBottom: 14 }}>
+                  <p
+                    style={{
+                      margin: '0 0 4px',
+                      fontFamily: '"DM Serif Display", serif',
+                      fontSize: 40,
+                      color: '#F59E0B',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ₹{ledger?.totalOwed.toLocaleString('en-IN')}
+                    <span
+                      style={{
+                        fontFamily: '"DM Sans", sans-serif',
+                        fontSize: 13,
+                        color: 'rgba(255,255,255,0.4)',
+                        marginLeft: 6,
+                        fontWeight: 400,
+                      }}
+                    >
+                      total due
+                    </span>
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                    {pendingMonths.map(pm => (
+                      <div key={pm.monthName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: 6 }}>
+                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontFamily: '"DM Sans", sans-serif' }}>{pm.monthName}</span>
+                        <span style={{ fontSize: 13, color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 600 }}>₹{pm.amountOwed.toLocaleString('en-IN')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p
                   style={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: 13,
-                    color: 'rgba(255,255,255,0.4)',
-                    marginLeft: 6,
-                    fontWeight: 400,
+                    margin: '0 0 14px',
+                    fontFamily: '"DM Serif Display", serif',
+                    fontSize: 40,
+                    color: '#F59E0B',
+                    lineHeight: 1,
                   }}
                 >
-                  /month
-                </span>
-              </p>
+                  ₹{student?.rent_amount.toLocaleString('en-IN') || '—'}
+                  <span
+                    style={{
+                      fontFamily: '"DM Sans", sans-serif',
+                      fontSize: 13,
+                      color: 'rgba(255,255,255,0.4)',
+                      marginLeft: 6,
+                      fontWeight: 400,
+                    }}
+                  >
+                    /month
+                  </span>
+                </p>
+              )}
 
               {/* Status badge */}
               {ledger && pStatus && (
@@ -435,6 +520,22 @@ export default function StudentDashboardPage() {
               <span style={{ fontSize: 16 }}>💬</span> WhatsApp
             </button>
           </div>
+        )}
+
+        {/* ── Download Ledger Button ── */}
+        {!loading && student && (
+          <button
+            onClick={handleDownloadLedger}
+            style={{
+              background: '#0F2744', color: '#fff', border: 'none',
+              borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 700,
+              fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              marginTop: 12, width: '100%'
+            }}
+          >
+            📄 Download Khata Ledger PDF
+          </button>
         )}
 
         {/* ── Last Payment Card ── */}

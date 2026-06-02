@@ -13,6 +13,7 @@ export interface ExportRow {
   due_date:      string
   notes:         string
   status:        'Paid' | 'Unpaid'
+  date_of_leaving: string | null
 }
  
 export interface ExportData {
@@ -47,16 +48,15 @@ export async function GET(request: NextRequest) {
   const { data: owner } = await supabase
     .from('hostel_owners').select('hostel_name').eq('id', user.id).single()
  
-  // Fetch all active students for this owner
-  const { data: students } = await supabase
+  // Fetch all students (active and inactive) for this owner
+  const { data: allStudents } = await supabase
     .from('students')
-    .select('id, full_name, room_number, phone, rent_amount, monthly_due_day')
+    .select('id, full_name, room_number, phone, rent_amount, monthly_due_day, is_active, date_of_leaving')
     .eq('owner_id', user.id)
-    .eq('is_active', true)
     .order('room_number')
  
-  if (!students || students.length === 0) {
-    return NextResponse.json<ApiError>({ error: 'No active students found.' }, { status: 404 })
+  if (!allStudents || allStudents.length === 0) {
+    return NextResponse.json<ApiError>({ error: 'No students found.' }, { status: 404 })
   }
  
   // Fetch payments for this month
@@ -72,6 +72,14 @@ export async function GET(request: NextRequest) {
   for (const p of payments || []) {
     if (!paymentMap.has(p.student_id)) paymentMap.set(p.student_id, p)
   }
+
+  // Filter students to include in this month's report
+  const students = allStudents.filter(s => {
+    if (s.is_active) return true
+    if (paymentMap.has(s.id)) return true
+    if (s.date_of_leaving && new Date(s.date_of_leaving) >= new Date(startDate)) return true
+    return false
+  })
  
   // Build export rows
   const rows: ExportRow[] = students.map(s => {
@@ -89,6 +97,7 @@ export async function GET(request: NextRequest) {
       due_date:      dueDate,
       notes:         p?.notes || '',
       status:        p ? 'Paid' : 'Unpaid',
+      date_of_leaving: s.date_of_leaving,
     }
   })
  

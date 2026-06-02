@@ -52,8 +52,11 @@ export interface Student {
   rent_amount:        number         // INR
   is_active:          boolean
   approval_status:    'pending' | 'approved' | 'rejected'
+  alternate_phone?:   string | null
+  custom_password?:   string | null
   password_hash:      string | null  // null in MVP
   user_id:            string | null  // Phase 2: links to auth.users via Google OAuth
+  date_of_leaving:    string | null
   created_at:         string
 }
  
@@ -122,4 +125,5 @@ export interface OwnerPublicInfo {
   payment_qr_url:  string | null
   payment_qr_note: string | null
   upi_id:          string | null
+  phone:           string
 }

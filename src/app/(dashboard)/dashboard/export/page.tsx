@@ -63,7 +63,8 @@ export default function ExportPage() {
         r.student_name, r.room_number,
         `Rs. ${r.rent_amount}`,
         r.amount_paid > 0 ? `Rs. ${r.amount_paid}` : '—',
-        r.payment_mode, r.paid_date || '—', r.status,
+        r.payment_mode, r.paid_date || '—', 
+        r.date_of_leaving ? `Left Hostel (${new Date(r.date_of_leaving).toLocaleDateString('en-IN', {day:'2-digit', month:'short'})})` : r.status,
       ]),
       startY: 50,
       styles: { fontSize: 8, cellPadding: 3 },
@@ -251,13 +252,23 @@ export default function ExportPage() {
                         <td style={{ padding: '9px 12px', color: '#64748B', textAlign: 'center', fontSize: 11 }}>{row.payment_mode}</td>
                         <td style={{ padding: '9px 12px', color: '#64748B', whiteSpace: 'nowrap' }}>{row.paid_date || '—'}</td>
                         <td style={{ padding: '9px 12px' }}>
-                          <span style={{
-                            background: row.status === 'Paid' ? '#ECFDF5' : '#FEF2F2',
-                            color:      row.status === 'Paid' ? '#065F46' : '#991B1B',
-                            fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-                          }}>
-                            {row.status}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                            <span style={{
+                              background: row.status === 'Paid' ? '#ECFDF5' : '#FEF2F2',
+                              color:      row.status === 'Paid' ? '#065F46' : '#991B1B',
+                              fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
+                            }}>
+                              {row.status}
+                            </span>
+                            {row.date_of_leaving && (
+                              <span style={{
+                                background: '#F1F5F9', color: '#475569',
+                                fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, whiteSpace: 'nowrap'
+                              }}>
+                                Left: {new Date(row.date_of_leaving).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

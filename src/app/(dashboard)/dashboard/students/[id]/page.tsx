@@ -68,14 +68,18 @@ export default function StudentProfilePage() {
   useEffect(() => { fetchStudent() }, [id])
 
   async function handleDeactivate() {
-    if (!confirm(`Remove ${student?.full_name} from active students? Payment history is preserved.`)) return
+    const defaultDate = new Date().toISOString().split('T')[0]
+    const dateStr = prompt(`Enter the date ${student?.full_name} left the hostel (YYYY-MM-DD):`, defaultDate)
+    if (dateStr === null) return // user cancelled
+    const finalDate = dateStr.trim() || defaultDate
+
     setDeactivating(true)
-    const res = await fetch(`/api/students/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/students/${id}?date_of_leaving=${finalDate}`, { method: 'DELETE' })
     if (res.ok) {
-      toast.success('Student deactivated.')
+      toast.success('Student marked as Left Hostel.')
       router.push('/dashboard/students')
     } else {
-      toast.error('Failed to deactivate student.')
+      toast.error('Failed to update student status.')
       setDeactivating(false)
     }
   }
@@ -190,7 +194,9 @@ export default function StudentProfilePage() {
             Room {student.room_number} · Joined {format(new Date(student.date_of_joining), 'd MMM yyyy')}
           </div>
           <div style={{ marginTop: 10 }}>
-            {student.approval_status === 'pending' ? (
+            {!student.is_active ? (
+              <StatusBadge label={`Left Hostel on ${student.date_of_leaving ? format(new Date(student.date_of_leaving), 'd MMM yyyy') : 'Unknown'}`} type="red" />
+            ) : student.approval_status === 'pending' ? (
               <StatusBadge label="Pending Approval" type="purple" />
             ) : (
               <StatusBadge label={`Active · ${badgeLbl}`} type={badgeType} />
@@ -367,28 +373,30 @@ export default function StudentProfilePage() {
             )}
           </div>
 
-          {/* Danger Zone */}
-          <div style={{ background: '#FEF2F2', borderRadius: 14, border: '1px solid #FECACA', padding: '14px 16px', marginBottom: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>
-              DANGER ZONE
+          {/* Leave Hostel Zone */}
+          {student.is_active && (
+            <div style={{ background: '#FEF2F2', borderRadius: 14, border: '1px solid #FECACA', padding: '14px 16px', marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>
+                LEFT HOSTEL
+              </div>
+              <p style={{ fontSize: 11, color: '#B91C1C', fontFamily: '"DM Sans", sans-serif', marginBottom: 10 }}>
+                Marking this student as left preserves their payment history for reports, but removes them from active lists.
+              </p>
+              <button
+                onClick={handleDeactivate}
+                disabled={deactivating}
+                style={{
+                  background: '#DC2626', color: '#fff', border: 'none',
+                  borderRadius: 10, padding: '10px 16px',
+                  fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                  cursor: deactivating ? 'not-allowed' : 'pointer',
+                  opacity: deactivating ? 0.7 : 1,
+                }}
+              >
+                {deactivating ? 'Updating…' : '🚪 Mark as Left Hostel'}
+              </button>
             </div>
-            <p style={{ fontSize: 11, color: '#B91C1C', fontFamily: '"DM Sans", sans-serif', marginBottom: 10 }}>
-              Deactivating removes this student from active lists. Payment history is never deleted.
-            </p>
-            <button
-              onClick={handleDeactivate}
-              disabled={deactivating}
-              style={{
-                background: '#DC2626', color: '#fff', border: 'none',
-                borderRadius: 10, padding: '10px 16px',
-                fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                cursor: deactivating ? 'not-allowed' : 'pointer',
-                opacity: deactivating ? 0.7 : 1,
-              }}
-            >
-              {deactivating ? 'Deactivating…' : '🗑 Deactivate Student'}
-            </button>
-          </div>
+          )}
             </>
           )}
         </div>

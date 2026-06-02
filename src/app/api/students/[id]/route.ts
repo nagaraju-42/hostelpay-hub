@@ -118,10 +118,13 @@ export async function DELETE(
   const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
+  const { searchParams } = new URL(request.url)
+  const date_of_leaving = searchParams.get('date_of_leaving') || new Date().toISOString().split('T')[0]
+
   // Soft delete — RLS ensures only owner can deactivate their student
   const { error } = await supabase
     .from('students')
-    .update({ is_active: false })
+    .update({ is_active: false, date_of_leaving })
     .eq('id', id)
     .eq('owner_id', user.id)
  

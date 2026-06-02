@@ -9,7 +9,7 @@ const PROTECTED_STUDENT_ROUTES = ['/s']
 const ADMIN_ROUTES      = ['/admin']
 const PUBLIC_ROUTES     = ['/login', '/reset-password', '/', '/qr', '/auth/callback']
  
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
  
   // ── OAUTH FALLBACK ──────────────────────────────────────────────────────

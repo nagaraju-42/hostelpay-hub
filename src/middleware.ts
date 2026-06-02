@@ -10,7 +10,17 @@ const ADMIN_ROUTES      = ['/admin']
 const PUBLIC_ROUTES     = ['/login', '/reset-password', '/', '/qr', '/auth/callback']
  
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
+ 
+  // ── OAUTH FALLBACK ──────────────────────────────────────────────────────
+  // If Supabase's Redirect URIs are misconfigured, it might redirect to the
+  // Site URL (e.g. '/' or '/login') instead of '/auth/callback'.
+  // This catches the OAuth code and forwards it to the correct handler.
+  if (searchParams.has('code') && pathname !== '/auth/callback') {
+    const callbackUrl = new URL('/auth/callback', request.url)
+    searchParams.forEach((value, key) => callbackUrl.searchParams.set(key, value))
+    return NextResponse.redirect(callbackUrl)
+  }
  
   // ── Create a response object we can modify (to set cookies) ──
   let supabaseResponse = NextResponse.next({ request })
@@ -43,11 +53,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── RULE 2: Protect /s (student) routes ───────────────────────────────
-  const isStudentRoute = PROTECTED_STUDENT_ROUTES.some(r => pathname.startsWith(r))
+  const isStudentRoute = pathname === '/s' || pathname.startsWith('/s/')
   if (isStudentRoute && pathname !== '/s' && !user) {
-    const loginUrl = new URL('/s', request.url)
-    loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
+    // Check for custom phone-login JWT cookie
+    const hasCustomSession = request.cookies.has('hostel_student_session')
+    if (!hasCustomSession) {
+      const loginUrl = new URL('/s', request.url)
+      loginUrl.searchParams.set('next', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   // ── RULE 3: Protect /admin routes ─────────────────────────────────────

@@ -51,6 +51,23 @@ export async function GET(request: NextRequest) {
             .update({ user_id: user.id })
             .eq('id', orphan.id)
         }
+
+        // ── Self-Healing: Update Email ──────────────────────────────────────
+        // If they logged in via Google, but their email in DB is still a fake
+        // phone-based email or outdated, we update it to their Google email.
+        const { data: linkedStudent } = await supabaseAdmin
+          .from('students')
+          .select('id, email')
+          .eq('user_id', user.id)
+          .limit(1)
+          .single()
+
+        if (linkedStudent && linkedStudent.email !== user.email) {
+          await supabaseAdmin
+            .from('students')
+            .update({ email: user.email })
+            .eq('id', linkedStudent.id)
+        }
       }
 
       return NextResponse.redirect(`${origin}${next}`)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthSession } from '@/lib/auth'
-import { getPaymentStatus } from '@/lib/utils/due-calc'
+import { getPaymentStatus, getTodayIST } from '@/lib/utils/due-calc'
 import type { Student, StudentFormData, ApiSuccess, ApiError, Payment } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Enrich with payment status (withStatus=1) ────────────────────────────
-  const today         = new Date()
-  const thirtyTwoDaysAgo = new Date(today)
-  thirtyTwoDaysAgo.setDate(today.getDate() - 32)
+  const today         = getTodayIST()
+  const twentyFourMonthsAgo = new Date(today)
+  twentyFourMonthsAgo.setMonth(today.getMonth() - 24)
 
   const studentIds = students.map(s => s.id)
   const { data: recentPayments } = await supabase
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     .select('*')
     .eq('owner_id', user.id)
     .in('student_id', studentIds)
-    .gte('paid_at', thirtyTwoDaysAgo.toISOString())
+    .gte('paid_at', twentyFourMonthsAgo.toISOString())
 
   const paymentsByStudent = new Map<string, Payment[]>()
   for (const p of (recentPayments ?? [])) {
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   const enriched = students.map(s => ({
     ...s,
-    payment_status: getPaymentStatus(s.monthly_due_day, paymentsByStudent.get(s.id) ?? [], today, s.date_of_joining),
+    payment_status: getPaymentStatus(Number(s.rent_amount), s.monthly_due_day, s.date_of_joining, paymentsByStudent.get(s.id) ?? [], today),
   }))
 
   return NextResponse.json<ApiSuccess<(Student & { payment_status: string })[]>>({ data: enriched })

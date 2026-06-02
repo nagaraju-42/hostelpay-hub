@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthSession } from '@/lib/auth'
-import { hasPaidThisCycle, getCurrentCycleDueDate } from '@/lib/utils/due-calc'
+import { getCurrentCycleDueDate, getTodayIST } from '@/lib/utils/due-calc'
 import type { Payment, ApiSuccess, ApiError } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -83,22 +83,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<ApiError>({ error: 'Forbidden.' }, { status: 403 })
   }
  
-  // ── Check for duplicate payment this cycle ──────────────────────────────
-  const today = new Date()
-  const thirtyTwoDaysAgo = new Date(today)
-  thirtyTwoDaysAgo.setDate(today.getDate() - 32)
+  // ── Check for duplicate payment (double-click prevention) ───────────────
+  const today = getTodayIST()
+  const fiveMinutesAgo = new Date(today.getTime() - 5 * 60000)
  
   const { data: existingPayments } = await supabase
     .from('payments')
-    // .select('id, paid_at')
-    .select('*')
+    .select('id')
     .eq('student_id', body.student_id)
-    .eq('owner_id', user.id)
-    .gte('paid_at', thirtyTwoDaysAgo.toISOString())
+    .eq('amount_paid', body.amount_paid)
+    .gte('paid_at', fiveMinutesAgo.toISOString())
  
-  if (hasPaidThisCycle(student.monthly_due_day, existingPayments || [], today)) {
+  if (existingPayments && existingPayments.length > 0) {
     return NextResponse.json<ApiError>({
-      error: `${student.full_name} has already paid for this cycle.`
+      error: `A payment of ₹${body.amount_paid} was already recorded for ${student.full_name} a few minutes ago. Please avoid double-clicking.`
     }, { status: 409 })
   }
  
@@ -115,7 +113,7 @@ export async function POST(request: NextRequest) {
       payment_mode: body.payment_mode,
       due_date:     dueDate.toISOString().split('T')[0],
       notes:        body.notes?.trim() || null,
-      paid_at:      new Date().toISOString(),
+      paid_at:      today.toISOString(),
     })
     .select()
     .single()

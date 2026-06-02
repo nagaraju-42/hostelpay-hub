@@ -271,6 +271,15 @@ export default function PendingDuesPage() {
                         }}>
                           {s.full_name}
                         </div>
+                        {!s.is_active && (
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, background: '#FEE2E2', color: '#991B1B',
+                            borderRadius: 4, padding: '2px 5px', border: '1px solid #FECACA',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            Left Hostel
+                          </span>
+                        )}
                         {s.months_unpaid > 1 && (
                           <span style={{
                             fontSize: 9, fontWeight: 800, background: '#DC2626', color: '#fff',

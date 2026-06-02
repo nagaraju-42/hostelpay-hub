@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthSession } from '@/lib/auth'
-import { hasPaidThisCycle, getDaysPastDue } from '@/lib/utils/due-calc'
+import { getPaymentStatus, getDaysPastDue, getTodayIST } from '@/lib/utils/due-calc'
 import type { Student, Payment, ApiSuccess, ApiError } from '@/types'
  
-// ── Response shape for this endpoint ─────────────────────────────────────
 export interface DueTodayStudent {
   id:             string
   full_name:      string
@@ -11,7 +10,7 @@ export interface DueTodayStudent {
   phone:          string
   rent_amount:    number
   monthly_due_day:number
-  days_past_due:  number   // 0 = due today, >0 = days overdue
+  days_past_due:  number
   last_payment:   Payment | null
 }
  
@@ -19,10 +18,9 @@ export async function GET(request: NextRequest) {
   const { supabase, user } = await getAuthSession()
   if (!user) return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
  
-  const today    = new Date()
+  const today    = getTodayIST()
   const todayDay = today.getDate()
  
-  // Step 1: Fetch ALL active students for this owner
   const { data: allStudents, error: studErr } = await supabase
     .from('students')
     .select('id, full_name, room_number, phone, rent_amount, monthly_due_day, date_of_joining')
@@ -33,17 +31,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json<ApiError>({ error: 'Failed to fetch students.' }, { status: 500 })
   }
  
-  // Step 2: Filter to only students whose due_day is today
   const dueStudents = allStudents.filter(s => s.monthly_due_day === todayDay)
  
   if (dueStudents.length === 0) {
     return NextResponse.json<ApiSuccess<DueTodayStudent[]>>({ data: [] })
   }
  
-  // Step 3: For each due student, check their recent payments
-  // Fetch payments from last 32 days (covers one full cycle)
-  const thirtyTwoDaysAgo = new Date(today)
-  thirtyTwoDaysAgo.setDate(today.getDate() - 32)
+  const twentyFourMonthsAgo = getTodayIST()
+  twentyFourMonthsAgo.setMonth(today.getMonth() - 24)
  
   const studentIds = dueStudents.map(s => s.id)
  
@@ -52,18 +47,17 @@ export async function GET(request: NextRequest) {
     .select('*')
     .eq('owner_id', user.id)
     .in('student_id', studentIds)
-    .gte('paid_at', thirtyTwoDaysAgo.toISOString())
+    .gte('paid_at', twentyFourMonthsAgo.toISOString())
     .order('paid_at', { ascending: false })
  
-  // Step 4: For each student, check if they already paid this cycle
   const result: DueTodayStudent[] = []
  
   for (const student of dueStudents) {
-    const studentPayments = (recentPayments || [])
-      .filter(p => p.student_id === student.id)
+    const studentPayments = (recentPayments || []).filter(p => p.student_id === student.id)
  
-    // Skip students who already paid this cycle
-    if (hasPaidThisCycle(student.monthly_due_day, studentPayments, today)) continue
+    const status = getPaymentStatus(Number(student.rent_amount), student.monthly_due_day, student.date_of_joining, studentPayments, today)
+    
+    if (status !== 'due_today') continue
  
     const lastPayment = studentPayments.length > 0 ? studentPayments[0] : null
  

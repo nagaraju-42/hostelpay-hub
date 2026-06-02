@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 // ── Google 'G' Logo SVG ────────────────────────────────────────────────────
@@ -40,6 +41,10 @@ export default function StudentLandingPage() {
 
   const [checking, setChecking] = useState(true)
   const [signingIn, setSigningIn] = useState(false)
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [phoneError, setPhoneError] = useState('')
+  const [phoneLoading, setPhoneLoading] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -80,6 +85,31 @@ export default function StudentLandingPage() {
       },
     })
     // Page will redirect; keep signingIn true
+  }
+
+  async function handlePhoneLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setPhoneError('')
+    if (!phone || !password) {
+      setPhoneError('Please enter both phone number and password.')
+      return
+    }
+    setPhoneLoading(true)
+    try {
+      const res = await fetch('/api/student/phone-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password })
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Login failed')
+      }
+      router.replace(nextParam)
+    } catch (err: any) {
+      setPhoneError(err.message)
+      setPhoneLoading(false)
+    }
   }
 
   if (checking) {
@@ -244,8 +274,64 @@ export default function StudentLandingPage() {
               lineHeight: 1.6,
             }}
           >
-            Sign in with your Google account to view your payment status and hostel details.
+            Sign in to view your payment status and hostel details.
           </p>
+        </div>
+
+        {/* ── Phone Login Form ── */}
+        <form onSubmit={handlePhoneLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {phoneError && (
+            <div style={{ color: '#DC2626', fontSize: 13, fontFamily: '"DM Sans", sans-serif', background: '#FEF2F2', padding: '10px', borderRadius: '8px' }}>
+              {phoneError}
+            </div>
+          )}
+          
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>
+              PHONE NUMBER
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="e.g. 9876543210"
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #E2E8F0', outline: 'none', fontFamily: '"DM Sans", sans-serif', fontSize: 14 }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>
+              PASSWORD
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Enter password"
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #E2E8F0', outline: 'none', fontFamily: '"DM Sans", sans-serif', fontSize: 14 }}
+            />
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>
+              Hint: Default password is your Hostel OTP
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={phoneLoading}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 12, background: '#F59E0B', color: '#fff', 
+              border: 'none', fontWeight: 700, fontSize: 15, cursor: phoneLoading ? 'not-allowed' : 'pointer',
+              opacity: phoneLoading ? 0.7 : 1, marginTop: 4, fontFamily: '"DM Sans", sans-serif'
+            }}
+          >
+            {phoneLoading ? 'Signing in...' : 'Log in with Phone'}
+          </button>
+        </form>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0' }}>
+          <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+          <span style={{ fontSize: 12, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', textTransform: 'uppercase', fontWeight: 600 }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
         </div>
 
         {/* Google Sign-in Button */}
@@ -348,6 +434,22 @@ export default function StudentLandingPage() {
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Contact Support */}
+        <div style={{ marginTop: 24, textAlign: 'center' }}>
+          <Link
+            href="/support"
+            style={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: 12,
+              color: '#185FA5',
+              textDecoration: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Need help? Contact Support
+          </Link>
         </div>
       </div>
     </>

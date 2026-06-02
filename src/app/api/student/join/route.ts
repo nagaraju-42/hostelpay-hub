@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Link existing record to this Google account
     const { data: linked, error: linkError } = await supabaseAdmin
       .from('students')
-      .update({ user_id: user.id })
+      .update({ user_id: user.id, email: user.email || phoneMatch.email })
       .eq('phone', phone)
       .eq('owner_id', owner.id)
       .select()

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, supabaseAdmin } from '@/lib/supabase/server'
+import { resolveStudentId } from '@/lib/auth-student'
 import type { Student, OwnerPublicInfo, ApiSuccess, ApiError } from '@/types'
 
 // Enriched student shape returned by GET
@@ -12,18 +13,19 @@ interface StudentWithOwner extends Student {
 // GET /api/student/me
 // Returns the authenticated student's profile + hostel owner public info.
 // ══════════════════════════════════════════════════════════════════════════
-export async function GET(_request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+export async function GET(request: NextRequest) {
+  const { studentId, isAuthenticated } = await resolveStudentId(request)
+  if (!isAuthenticated) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!studentId) {
+    return NextResponse.json<ApiError>({ error: 'No student profile found. Please join a hostel first.' }, { status: 404 })
   }
 
   const { data: students, error } = await supabaseAdmin
     .from('students')
-    .select('*, hostel_owners!inner(hostel_name, hostel_otp, payment_qr_url, payment_qr_note, upi_id)')
-    .eq('user_id', user.id)
+    .select('*, hostel_owners!inner(hostel_name, hostel_otp, payment_qr_url, payment_qr_note, upi_id, phone)')
+    .eq('id', studentId)
     .eq('is_active', true)
     .order('approval_status', { ascending: true })
     .limit(1)
@@ -55,11 +57,12 @@ export async function GET(_request: NextRequest) {
 // Student updates their own allowed profile fields.
 // ══════════════════════════════════════════════════════════════════════════
 export async function PATCH(request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  const { studentId, isAuthenticated } = await resolveStudentId(request)
+  if (!isAuthenticated) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!studentId) {
+    return NextResponse.json<ApiError>({ error: 'Not found' }, { status: 404 })
   }
 
   let body: {
@@ -67,6 +70,8 @@ export async function PATCH(request: NextRequest) {
     address?: string
     aadhaar_number?: string
     full_name?: string
+    alternate_phone?: string
+    custom_password?: string
   }
 
   try {
@@ -83,28 +88,14 @@ export async function PATCH(request: NextRequest) {
     )
   }
 
-  // Find the student's current record
-  const { data: existingData, error: findError } = await supabase
-    .from('students')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .limit(1)
-
-  const existing = existingData?.[0]
-  if (findError || !existing) {
-    return NextResponse.json<ApiError>(
-      { error: 'No student profile found.' },
-      { status: 404 }
-    )
-  }
-
   // Build safe update object — only allow these fields
-  const updateObj: Record<string, string> = {}
+  const updateObj: Record<string, string | null> = {}
   if (body.full_name !== undefined) updateObj.full_name = body.full_name.trim()
   if (body.phone !== undefined) updateObj.phone = body.phone
-  if (body.address !== undefined) updateObj.address = body.address
-  if (body.aadhaar_number !== undefined) updateObj.aadhaar_number = body.aadhaar_number
+  if (body.address !== undefined) updateObj.address = body.address || null
+  if (body.aadhaar_number !== undefined) updateObj.aadhaar_number = body.aadhaar_number || null
+  if (body.alternate_phone !== undefined) updateObj.alternate_phone = body.alternate_phone || null
+  if (body.custom_password !== undefined) updateObj.custom_password = body.custom_password || null
 
   if (Object.keys(updateObj).length === 0) {
     return NextResponse.json<ApiError>(
@@ -113,10 +104,10 @@ export async function PATCH(request: NextRequest) {
     )
   }
 
-  const { data: updated, error: updateError } = await supabase
+  const { data: updated, error: updateError } = await supabaseAdmin
     .from('students')
     .update(updateObj)
-    .eq('id', existing.id)
+    .eq('id', studentId)
     .select()
     .single()
 
@@ -138,18 +129,26 @@ export async function PATCH(request: NextRequest) {
 // Unlinks the student from their hostel (sets user_id = null).
 // Allows them to join a different hostel afterward.
 // ══════════════════════════════════════════════════════════════════════════
-export async function DELETE(_request: NextRequest) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+export async function DELETE(request: NextRequest) {
+  const { studentId, isAuthenticated } = await resolveStudentId(request)
+  if (!isAuthenticated) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
+  if (!studentId) {
+    return NextResponse.json<ApiError>({ error: 'Not found' }, { status: 404 })
+  }
 
-  const { error } = await supabase
+  // Delete the custom JWT cookie just in case
+  const response = NextResponse.json<ApiSuccess<{ success: boolean }>>(
+    { data: { success: true }, message: 'Left hostel successfully.' },
+    { status: 200 }
+  )
+  response.cookies.delete('hostel_student_session')
+
+  const { error } = await supabaseAdmin
     .from('students')
     .update({ user_id: null })
-    .eq('user_id', user.id)
+    .eq('id', studentId)
 
   if (error) {
     console.error('[DELETE /api/student/me]', error)

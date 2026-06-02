@@ -92,6 +92,8 @@ interface EditForm {
   phone: string
   address: string
   aadhaar_number: string
+  alternate_phone: string
+  custom_password: string
 }
 
 export default function StudentProfilePage() {
@@ -101,7 +103,7 @@ export default function StudentProfilePage() {
 
   // Edit state
   const [editing, setEditing] = useState(false)
-  const [editForm, setEditForm] = useState<EditForm>({ phone: '', address: '', aadhaar_number: '' })
+  const [editForm, setEditForm] = useState<EditForm>({ phone: '', address: '', aadhaar_number: '', alternate_phone: '', custom_password: '' })
   const [saving, setSaving] = useState(false)
   const [focusedField, setFocusedField] = useState<keyof EditForm | null>(null)
 
@@ -136,6 +138,8 @@ export default function StudentProfilePage() {
           phone: json.data.phone || '',
           address: json.data.address || '',
           aadhaar_number: json.data.aadhaar_number || '',
+          alternate_phone: json.data.alternate_phone || '',
+          custom_password: json.data.custom_password || '',
         })
       }
     } finally {
@@ -154,6 +158,8 @@ export default function StudentProfilePage() {
           phone: editForm.phone.trim(),
           address: editForm.address.trim() || null,
           aadhaar_number: editForm.aadhaar_number.trim() || null,
+          alternate_phone: editForm.alternate_phone.trim() || null,
+          custom_password: editForm.custom_password.trim() || null,
         }),
       })
       if (res.ok) {
@@ -579,6 +585,47 @@ export default function StudentProfilePage() {
                     </p>
                   </div>
 
+                  {/* Alternate Phone edit */}
+                  <div style={{ padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    <label style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Alternate Phone
+                    </label>
+                    <input
+                      id="edit-alt-phone"
+                      type="tel"
+                      value={editForm.alternate_phone}
+                      onChange={e => setEditForm(f => ({ ...f, alternate_phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                      onFocus={() => setFocusedField('alternate_phone')}
+                      onBlur={() => setFocusedField(null)}
+                      style={{
+                        display: 'block', width: '100%', marginTop: 6, padding: '10px 12px',
+                        border: `1.5px solid ${focusedField === 'alternate_phone' ? '#0F2744' : '#E2E8F0'}`, borderRadius: 8,
+                        fontFamily: '"DM Sans", sans-serif', fontSize: 14, color: '#0F2744', outline: 'none', boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {/* Custom Password edit */}
+                  <div style={{ padding: '12px 0' }}>
+                    <label style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Login Password
+                    </label>
+                    <input
+                      id="edit-password"
+                      type="password"
+                      value={editForm.custom_password}
+                      onChange={e => setEditForm(f => ({ ...f, custom_password: e.target.value }))}
+                      onFocus={() => setFocusedField('custom_password')}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="Leave blank to use Hostel OTP"
+                      style={{
+                        display: 'block', width: '100%', marginTop: 6, padding: '10px 12px',
+                        border: `1.5px solid ${focusedField === 'custom_password' ? '#0F2744' : '#E2E8F0'}`, borderRadius: 8,
+                        fontFamily: '"DM Sans", sans-serif', fontSize: 14, color: '#0F2744', outline: 'none', boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
                   {/* Edit actions */}
                   <div style={{ paddingBottom: 12, display: 'flex', gap: 10 }}>
                     <button
@@ -605,7 +652,7 @@ export default function StudentProfilePage() {
                       {saving ? <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : '💾 Save'}
                     </button>
                     <button
-                      onClick={() => { setEditing(false); if (meData) setEditForm({ phone: meData.data.phone || '', address: meData.data.address || '', aadhaar_number: meData.data.aadhaar_number || '' }) }}
+                      onClick={() => { setEditing(false); if (meData) setEditForm({ phone: meData.data.phone || '', address: meData.data.address || '', aadhaar_number: meData.data.aadhaar_number || '', alternate_phone: meData.data.alternate_phone || '', custom_password: meData.data.custom_password || '' }) }}
                       style={{
                         flex: 1,
                         padding: '12px',
@@ -626,6 +673,7 @@ export default function StudentProfilePage() {
               ) : (
                 <>
                   <InfoRow icon="📞" label="Phone" value={student?.phone ? `+91 ${student.phone}` : '—'} />
+                  <InfoRow icon="📞" label="Alt Phone" value={student?.alternate_phone ? `+91 ${student.alternate_phone}` : 'Not set'} />
                   <InfoRow icon="🏠" label="Address" value={student?.address || 'Not set'} />
                   <InfoRow icon="🪪" label="Aadhaar" value={maskAadhaar(student?.aadhaar_number || null)} />
                 </>

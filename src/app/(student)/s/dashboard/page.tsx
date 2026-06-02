@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { StudentBottomNav } from '@/components/mobile/StudentBottomNav'
+import { StatusBadge } from '@/components/mobile/StatusBadge'
+import { calculateLedger, getPaymentStatus, getTodayIST } from '@/lib/utils/due-calc'
 import type { Student, Payment, OwnerPublicInfo } from '@/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -23,36 +25,6 @@ function getGreeting(): string {
 
 function getFirstName(name: string): string {
   return name.split(' ')[0]
-}
-
-type PaymentStatus = 'paid' | 'due_today' | 'overdue' | 'unknown'
-
-function computePaymentStatus(
-  student: Student,
-  lastPayment: Payment | null
-): { status: PaymentStatus; label: string; daysLeft: number } {
-  const today = new Date()
-  const currentMonth = today.getMonth()
-  const currentYear = today.getFullYear()
-  const dueDay = student.monthly_due_day
-
-  // When does the current cycle's payment count as "paid"?
-  if (lastPayment) {
-    const paidAt = new Date(lastPayment.paid_at)
-    const paidMonth = paidAt.getMonth()
-    const paidYear = paidAt.getFullYear()
-    if (paidMonth === currentMonth && paidYear === currentYear) {
-      return { status: 'paid', label: 'Paid this month ✅', daysLeft: 0 }
-    }
-  }
-
-  // Not paid — check overdue
-  const dueDate = new Date(currentYear, currentMonth, dueDay)
-  const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diff > 0) return { status: 'due_today', label: `Due in ${diff} day${diff === 1 ? '' : 's'}`, daysLeft: diff }
-  if (diff === 0) return { status: 'due_today', label: 'Due today ⚠️', daysLeft: 0 }
-  return { status: 'overdue', label: `Overdue by ${Math.abs(diff)} day${Math.abs(diff) === 1 ? '' : 's'} 🔴`, daysLeft: diff }
 }
 
 // ── Skeleton ───────────────────────────────────────────────────────────────
@@ -123,17 +95,15 @@ export default function StudentDashboardPage() {
   const router = useRouter()
 
   const [meData, setMeData] = useState<MeResponse | null>(null)
-  const [lastPayment, setLastPayment] = useState<Payment | null>(null)
+  const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace('/s')
-        return
-      }
+      // NOTE: We also allow custom session cookie, so we don't strictly block here if session is null.
+      // loadData() will fail 401 if unauthorized.
       loadData()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -145,7 +115,7 @@ export default function StudentDashboardPage() {
     try {
       const [meRes, paymentsRes] = await Promise.all([
         fetch('/api/student/me', { cache: 'no-store' }),
-        fetch('/api/student/payments?limit=1'),
+        fetch('/api/student/payments'),
       ])
 
       if (meRes.status === 401) { router.replace('/s'); return }
@@ -161,7 +131,7 @@ export default function StudentDashboardPage() {
 
       if (paymentsRes.ok) {
         const pJson = await paymentsRes.json()
-        setLastPayment(Array.isArray(pJson.data) && pJson.data.length > 0 ? pJson.data[0] : null)
+        setPayments(pJson.data || [])
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -172,16 +142,37 @@ export default function StudentDashboardPage() {
 
   const student = meData?.data
   const hostel_name = student?.owner?.hostel_name
-  const paymentInfo = student && lastPayment !== undefined
-    ? computePaymentStatus(student, lastPayment)
-    : null
-
-  const statusColors: Record<PaymentStatus, { bg: string; text: string; border: string }> = {
-    paid:      { bg: '#F0FDF4', text: '#16A34A', border: '#86EFAC' },
-    due_today: { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' },
-    overdue:   { bg: '#FEF2F2', text: '#DC2626', border: '#FCA5A5' },
-    unknown:   { bg: '#F8FAFC', text: '#64748B', border: '#E2E8F0' },
+  const lastPayment = payments.length > 0 ? payments[0] : null
+  
+  let ledger = null
+  let pStatus = null
+  
+  if (student) {
+    const today = getTodayIST()
+    ledger = calculateLedger(
+      student.rent_amount,
+      student.monthly_due_day,
+      student.date_of_joining,
+      payments,
+      today
+    )
+    pStatus = getPaymentStatus(student.rent_amount, student.monthly_due_day, student.date_of_joining, payments, today)
   }
+
+  function getBadgeType(s: string) {
+    if (s === 'paid') return 'green'
+    if (s === 'due_today') return 'amber'
+    if (s === 'overdue') return 'red'
+    return 'blue'
+  }
+
+  function getBadgeLabel(s: string) {
+    if (s === 'paid') return 'Paid this month ✅'
+    if (s === 'due_today') return 'Due today ⚠️'
+    if (s === 'overdue') return 'Overdue 🔴'
+    return 'Upcoming ⏳'
+  }
+
 
   return (
     <>
@@ -368,31 +359,27 @@ export default function StudentDashboardPage() {
               </p>
 
               {/* Status badge */}
-              {paymentInfo && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <div
-                    style={{
-                      background: statusColors[paymentInfo.status].bg,
-                      border: `1px solid ${statusColors[paymentInfo.status].border}`,
-                      borderRadius: 20,
-                      padding: '5px 12px',
-                      fontFamily: '"DM Sans", sans-serif',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: statusColors[paymentInfo.status].text,
-                    }}
-                  >
-                    {paymentInfo.label}
+              {ledger && pStatus && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <StatusBadge label={getBadgeLabel(pStatus)} type={getBadgeType(pStatus) as any} />
+                    <span
+                      style={{
+                        fontFamily: '"DM Sans", sans-serif',
+                        fontSize: 11,
+                        color: 'rgba(255,255,255,0.4)',
+                      }}
+                    >
+                      Due {getOrdinal(student?.monthly_due_day || 5)} of every month
+                    </span>
                   </div>
-                  <span
-                    style={{
-                      fontFamily: '"DM Sans", sans-serif',
-                      fontSize: 11,
-                      color: 'rgba(255,255,255,0.4)',
-                    }}
-                  >
-                    Due {getOrdinal(student?.monthly_due_day || 5)} of every month
-                  </span>
+                  {(ledger.totalOwed > 0 || ledger.monthsUnpaid > 0) && (
+                    <div style={{ background: 'rgba(255,0,0,0.1)', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,0,0,0.2)' }}>
+                      <p style={{ margin: 0, fontSize: 13, color: '#FECACA', fontFamily: '"DM Sans", sans-serif' }}>
+                        Total Owed: <strong style={{ color: '#fff' }}>₹{ledger.totalOwed.toLocaleString('en-IN')}</strong> ({ledger.monthsUnpaid.toFixed(1)} months unpaid)
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -419,6 +406,34 @@ export default function StudentDashboardPage() {
               label="Member since"
               value={student?.date_of_joining ? format(new Date(student.date_of_joining), 'MMM yyyy') : '—'}
             />
+          </div>
+        )}
+
+        {/* ── Contact Owner ── */}
+        {!loading && student?.owner?.phone && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <button
+              onClick={() => window.open(`tel:${student.owner.phone}`)}
+              style={{
+                background: '#EEF2FF', color: '#4338CA', border: '1px solid #C7D2FE',
+                borderRadius: 14, padding: '12px', fontSize: 13, fontWeight: 700,
+                fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+              }}
+            >
+              <span style={{ fontSize: 16 }}>📞</span> Call Owner
+            </button>
+            <button
+              onClick={() => window.open(`https://wa.me/91${student.owner.phone}`, '_blank')}
+              style={{
+                background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0',
+                borderRadius: 14, padding: '12px', fontSize: 13, fontWeight: 700,
+                fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+              }}
+            >
+              <span style={{ fontSize: 16 }}>💬</span> WhatsApp
+            </button>
           </div>
         )}
 

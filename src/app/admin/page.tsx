@@ -60,6 +60,52 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleCopyLink(ownerId: string) {
+    try {
+      const res = await fetch(`/api/admin/owners/${ownerId}/magic-link`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.magicLink) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(data.magicLink)
+          alert('Magic login link copied to clipboard! (Expires in 10 minutes)')
+        } else {
+          // Fallback for non-HTTPS local testing
+          const textArea = document.createElement("textarea")
+          textArea.value = data.magicLink
+          document.body.appendChild(textArea)
+          textArea.select()
+          try {
+            document.execCommand('copy')
+            alert('Magic login link copied to clipboard! (Expires in 10 minutes)')
+          } catch (err) {
+            alert(`Failed to copy automatically. Here is the link:\n\n${data.magicLink}`)
+          }
+          document.body.removeChild(textArea)
+        }
+      } else {
+        alert(`Failed to generate link: ${data.error || 'Unknown error'}`)
+      }
+    } catch (e) {
+      alert('Network error while generating magic link')
+    }
+  }
+
+  async function handleWhatsAppShare(ownerId: string, phone: string) {
+    try {
+      const res = await fetch(`/api/admin/owners/${ownerId}/magic-link`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.magicLink) {
+        const waText = encodeURIComponent(`Here is your secure 10-minute login link for HostelPay Hub:\n${data.magicLink}`)
+        const waUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${waText}`
+        window.open(waUrl, '_blank')
+      } else {
+        alert(`Failed to generate link: ${data.error || 'Unknown error'}`)
+      }
+    } catch (e) {
+      alert('Network error while generating magic link')
+    }
+  }
+
   const totalStudents = owners.reduce((s, o) => s + (o.student_count || 0), 0)
   const totalRevenue  = owners.reduce((s, o) => s + (o.monthly_revenue || 0), 0)
 
@@ -260,6 +306,28 @@ export default function AdminDashboardPage() {
                           fontFamily: '"DM Sans", sans-serif',
                         }}>
                         🕵️ Impersonate
+                      </button>
+                      <button 
+                        onClick={() => handleCopyLink(owner.id)}
+                        style={{
+                          background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)',
+                          borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          fontSize: 12, color: '#34D399', fontWeight: 600,
+                          fontFamily: '"DM Sans", sans-serif',
+                        }}>
+                        🔗 Copy Link
+                      </button>
+                      <button 
+                        onClick={() => handleWhatsAppShare(owner.id, owner.phone)}
+                        style={{
+                          background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)',
+                          borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          fontSize: 12, color: '#25D366', fontWeight: 600,
+                          fontFamily: '"DM Sans", sans-serif',
+                        }}>
+                        💬 WhatsApp
                       </button>
                       <Link href={`/admin/owners/${owner.id}`}>
                         <button style={{

@@ -213,28 +213,66 @@ export function getPendingMonths(
     cycles.sort((a, b) => a.cycleDue.getTime() - b.cycleDue.getTime())
   }
 
-  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_paid || 0), 0)
-  let remainingPaid = totalPaid
+  // 1. Separate targeted payments from generic payments
+  let genericPaid = 0;
+  const targetedAmounts: Record<string, number> = {}
+
+  for (const p of payments) {
+    let amount = Number(p.amount_paid || 0)
+    if (p.notes && p.notes.includes('Paid for: ')) {
+      const parts = p.notes.split('|')[0].replace('Paid for: ', '').split(',')
+      const targetedMonths = parts.map(m => m.trim()).filter(Boolean)
+      
+      if (targetedMonths.length > 0) {
+        let amountPerMonth = amount / targetedMonths.length;
+        for (const m of targetedMonths) {
+          targetedAmounts[m] = (targetedAmounts[m] || 0) + amountPerMonth
+        }
+        continue;
+      }
+    }
+    genericPaid += amount;
+  }
+
+  let remainingGenericPaid = genericPaid
   const pendingMonths: PendingMonth[] = []
 
   for (const cycle of cycles) {
-    // If it's a discount (negative billedAmount), it reduces remaining needed
-    if (cycle.billedAmount < 0) {
-      remainingPaid -= cycle.billedAmount // subtracting a negative adds to remaining paid capacity
+    const cycleName = cycle.desc.includes('Rent Assessed') ? cycle.desc.replace('Rent Assessed (', '').replace(')', '') : cycle.desc
+    let owed = cycle.billedAmount
+
+    if (owed < 0) {
+      remainingGenericPaid -= owed // subtracting a negative adds to generic capacity
       continue
     }
 
-    if (remainingPaid >= cycle.billedAmount) {
-      remainingPaid -= cycle.billedAmount
+    // Apply targeted payment first
+    if (targetedAmounts[cycleName]) {
+      const applied = Math.min(owed, targetedAmounts[cycleName])
+      owed -= applied
+      targetedAmounts[cycleName] -= applied
+      // Any excess targeted amount spills over to generic
+      if (targetedAmounts[cycleName] > 0) {
+        remainingGenericPaid += targetedAmounts[cycleName]
+        targetedAmounts[cycleName] = 0
+      }
+    }
+
+    if (owed <= 0) continue
+
+    // Apply generic payment
+    if (remainingGenericPaid >= owed) {
+      remainingGenericPaid -= owed
+      owed = 0
     } else {
-      const amountOwed = cycle.billedAmount - remainingPaid
-      remainingPaid = 0
+      owed -= remainingGenericPaid
+      remainingGenericPaid = 0
       
       pendingMonths.push({
         cycleDue: cycle.cycleDue,
-        monthName: cycle.desc.includes('Rent Assessed') ? cycle.desc.replace('Rent Assessed (', '').replace(')', '') : cycle.desc,
+        monthName: cycleName,
         billedAmount: cycle.billedAmount,
-        amountOwed: Math.round(amountOwed)
+        amountOwed: Math.round(owed)
       })
     }
   }
@@ -293,6 +331,9 @@ export function generateStudentLedger(
   leaveDateString?: string | null,
   manualCharges?: ManualCharge[]
 ): LedgerTransaction[] {
+  
+  // Calculate pending months first to know which charges are paid
+  const pendingMonths = getPendingMonths(studentRent, dueDay, joinDateString, payments, referenceDate, leaveDateString, manualCharges)
   const rent = Number(studentRent) || 0
   if (rent <= 0) return []
 
@@ -321,10 +362,16 @@ export function generateStudentLedger(
     if (cycleDue < joinDate) break
 
     const monthName = cycleDue.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    const longMonthName = cycleDue.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      
+    // Check if this cycle is paid
+    const isPending = pendingMonths.some(m => m.monthName === longMonthName)
+    const statusTag = isPending ? '' : ' ✅'
+
     billedEvents.push({ 
       date: cycleDue, 
       amount: rent,
-      desc: `Rent Assessed (${monthName})`
+      desc: `Rent Assessed (${monthName})${statusTag}`
     })
 
     if (!lastCycleDue || cycleDue > lastCycleDue) {
@@ -356,11 +403,20 @@ export function generateStudentLedger(
     }
   }
 
-  const paymentEvents = payments.map(p => ({
-    date: new Date(p.paid_at),
-    amount: Number(p.amount_paid || 0),
-    desc: `Payment Received (${p.payment_mode === 'upi' ? 'UPI' : p.payment_mode === 'cash' ? 'Cash' : 'Bank'})`
-  }))
+  const paymentEvents = payments.map(p => {
+    let modeText = p.payment_mode === 'upi' ? 'UPI' : p.payment_mode === 'cash' ? 'Cash' : 'Bank'
+    let baseDesc = `Payment Received (${modeText})`
+    
+    if (p.notes && p.notes.trim()) {
+      baseDesc += ` - ${p.notes.trim()}`
+    }
+
+    return {
+      date: new Date(p.paid_at),
+      amount: Number(p.amount_paid || 0),
+      desc: baseDesc
+    }
+  })
 
   const allEvents = [
     ...billedEvents.map(e => ({ ...e, type: 'charge' as const })),

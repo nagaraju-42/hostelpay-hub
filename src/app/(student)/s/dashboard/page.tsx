@@ -580,13 +580,24 @@ export default function StudentDashboardPage() {
                 </p>
                 <p
                   style={{
+                    margin: '0 0 4px',
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#1E293B',
+                  }}
+                >
+                  {lastPayment.notes?.replace('Paid for: ', '') || format(new Date(lastPayment.paid_at), 'MMMM yyyy')}
+                </p>
+                <p
+                  style={{
                     margin: 0,
                     fontFamily: '"DM Sans", sans-serif',
                     fontSize: 12,
                     color: '#64748B',
                   }}
                 >
-                  {format(new Date(lastPayment.paid_at), 'd MMM yyyy')} · {lastPayment.payment_mode.toUpperCase()}
+                  Paid on {format(new Date(lastPayment.paid_at), 'd MMM yyyy')} · {lastPayment.payment_mode.toUpperCase()}
                 </p>
               </div>
               <div

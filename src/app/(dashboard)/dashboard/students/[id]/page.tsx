@@ -411,10 +411,10 @@ export default function StudentProfilePage() {
                   }}>₹</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>
-                      {format(new Date(p.paid_at), 'MMMM yyyy')}
+                      {p.notes?.replace('Paid for: ', '') || format(new Date(p.paid_at), 'MMMM yyyy')}
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
-                      {p.payment_mode.toUpperCase()} · {format(new Date(p.paid_at), 'd MMM')}
+                      {p.payment_mode.toUpperCase()} · Paid on {format(new Date(p.paid_at), 'd MMM yyyy')}
                     </div>
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>

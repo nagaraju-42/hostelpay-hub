@@ -233,6 +233,7 @@ export default function DashboardPage() {
                 const col        = colorFromName(name)
                 const amt        = `+₹${Number(p.amount_paid).toLocaleString('en-IN')}`
                 const isLast     = i === recentPayments.slice(0, 5).length - 1
+                const monthInfo  = p.notes?.replace('Paid for: ', '') || ''
                 return (
                   <div
                     key={p.id}
@@ -247,8 +248,11 @@ export default function DashboardPage() {
                         <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>
                           {name}
                         </div>
-                        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
-                          Room {room} · {paidAt}
+                        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>
+                          Room {room} {monthInfo ? `· for ${monthInfo}` : ''}
+                        </div>
+                        <div style={{ fontSize: 10, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>
+                          Paid on {paidAt}
                         </div>
                       </div>
                     </div>

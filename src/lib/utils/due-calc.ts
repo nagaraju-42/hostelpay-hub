@@ -291,6 +291,13 @@ export function getPaymentStatus(
   leaveDateString?: string | null,
   manualCharges?: ManualCharge[]
 ): PaymentStatus {
+  const joinDate = new Date(joinDateString)
+  joinDate.setHours(0, 0, 0, 0)
+  const today = new Date(referenceDate)
+  today.setHours(0, 0, 0, 0)
+
+  if (today < joinDate) return 'upcoming'
+
   const ledger = calculateLedger(studentRent, dueDay, joinDateString, payments, referenceDate, leaveDateString, manualCharges)
  
   if (ledger.totalOwed > 0) {

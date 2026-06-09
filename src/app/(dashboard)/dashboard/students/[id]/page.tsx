@@ -9,8 +9,9 @@ import { MobileAvatar, initialsFromName, colorFromName } from '@/components/mobi
 import { StatusBadge, statusToBadgeType, statusLabel } from '@/components/mobile/StatusBadge'
 import { EditStudentSheet } from '@/components/students/EditStudentSheet'
 import { AddManualChargeSheet } from '@/components/students/AddManualChargeSheet'
+import { RecordPaymentSheet } from '@/components/students/RecordPaymentSheet'
 import type { StudentWithPayments } from '@/types'
-import { generateStudentLedger, getTodayIST } from '@/lib/utils/due-calc'
+import { generateStudentLedger, getTodayIST, getPaymentStatus, getNextDueDate } from '@/lib/utils/due-calc'
 import { downloadStudentLedgerPDF } from '@/lib/utils/pdf'
 
 // ── Inline CopyButton component ───────────────────────────────────────────
@@ -60,6 +61,7 @@ export default function StudentProfilePage() {
   const [approving,    setApproving]    = useState(false)
   const [rejecting,    setRejecting]    = useState(false)
   const [showChargeSheet, setShowChargeSheet] = useState(false)
+  const [showPaymentSheet, setShowPaymentSheet] = useState(false)
 
   async function fetchStudent() {
     const res = await fetch(`/api/students/${id}`)
@@ -113,6 +115,17 @@ export default function StudentProfilePage() {
     }
   }
 
+  async function handleDeletePayment(paymentId: string) {
+    if (!confirm('Are you sure you want to delete this payment?')) return
+    const res = await fetch(`/api/payments/${paymentId}`, { method: 'DELETE' })
+    if (res.ok) {
+      toast.success('Payment deleted.')
+      fetchStudent()
+    } else {
+      toast.error('Failed to delete payment.')
+    }
+  }
+
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       <TopBar title="Student profile" backHref="/dashboard/students" />
@@ -156,15 +169,22 @@ export default function StudentProfilePage() {
     )
   }
 
-  const nextDue = new Date()
-  const today   = nextDue.getDate()
-  if (today > student.monthly_due_day) {
-    nextDue.setMonth(nextDue.getMonth() + 1)
-  }
-  nextDue.setDate(student.monthly_due_day)
+  const today = getTodayIST()
+  const joinDate = new Date(student.date_of_joining)
+  const refDate = today < joinDate ? joinDate : today
+
+  const nextDue = getNextDueDate(student.monthly_due_day, refDate)
   const nextDueStr = format(nextDue, 'd MMM')
 
-  const payStatus = (student as StudentWithPayments & { payment_status?: string }).payment_status ?? 'upcoming'
+  const payStatus = getPaymentStatus(
+    student.rent_amount,
+    student.monthly_due_day,
+    student.date_of_joining,
+    student.payments,
+    today,
+    student.date_of_leaving,
+    student.manual_charges
+  )
   const badgeType = statusToBadgeType(payStatus)
   const badgeLbl  = statusLabel(payStatus)
 
@@ -330,17 +350,11 @@ export default function StudentProfilePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             {/* Mark Paid */}
             <button
-              onClick={() => router.push(`/dashboard/students/${id}/pay`)}
-              style={{
-                background: '#0F2744', color: '#fff', border: 'none',
-                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 4, flexDirection: 'column',
-              }}
+              onClick={() => setShowPaymentSheet(true)}
+              style={{ flex: 1, padding: 12, background: '#0F2744', color: '#fff', borderRadius: 12, border: 'none', fontWeight: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
             >
-              <span style={{ fontSize: 18 }}>✅</span>
-              <span>Mark Paid</span>
+              <div style={{ fontSize: 18 }}>✅</div>
+              <div style={{ fontSize: 12 }}>Mark Paid</div>
             </button>
             {/* Add Charge */}
             <button
@@ -417,8 +431,17 @@ export default function StudentProfilePage() {
                       {p.payment_mode.toUpperCase()} · Paid on {format(new Date(p.paid_at), 'd MMM yyyy')}
                     </div>
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
-                    ₹{Number(p.amount_paid).toLocaleString('en-IN')}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                      ₹{Number(p.amount_paid).toLocaleString('en-IN')}
+                    </div>
+                    <button
+                      onClick={() => handleDeletePayment(p.id)}
+                      style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', opacity: 0.6 }}
+                      title="Delete payment"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               ))
@@ -465,6 +488,13 @@ export default function StudentProfilePage() {
         open={showChargeSheet}
         onOpenChange={setShowChargeSheet}
         onAdded={fetchStudent}
+      />
+
+      <RecordPaymentSheet
+        student={student}
+        open={showPaymentSheet}
+        onOpenChange={setShowPaymentSheet}
+        onSuccess={() => { setShowPaymentSheet(false); fetchStudent(); }}
       />
     </div>
   )

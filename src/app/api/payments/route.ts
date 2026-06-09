@@ -47,6 +47,7 @@ interface MarkPaidBody {
   payment_mode: 'cash' | 'upi' | 'bank'
   notes?:       string
   date?:        string
+  paid_at?:     string
 }
  
 export async function POST(request: NextRequest) {
@@ -104,7 +105,9 @@ export async function POST(request: NextRequest) {
  
   // ── Determine Payment Date ──────────────────────────────────────────────
   let finalPaidAt = today
-  if (body.date) {
+  if (body.paid_at) {
+    finalPaidAt = new Date(body.paid_at)
+  } else if (body.date) {
     const [y, m, d] = body.date.split('-').map(Number)
     if (y && m && d) {
       if (y !== today.getFullYear() || (m - 1) !== today.getMonth() || d !== today.getDate()) {

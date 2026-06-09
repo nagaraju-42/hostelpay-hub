@@ -10,6 +10,7 @@ import type { Student } from '@/types'
 
 interface StudentWithStatus extends Student {
   payment_status?: string
+  last_paid_at?: string | null
 }
 
 function statusDotColor(status?: string): string {

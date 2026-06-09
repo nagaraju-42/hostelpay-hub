@@ -19,6 +19,7 @@ const editSchema = z.object({
   room_number:      z.string().min(1, 'Room number is required.'),
   age:              z.string().optional(),
   address:          z.string().optional(),
+  date_of_joining:  z.string().min(1, 'Date of joining is required.'),
   monthly_due_day:  z.string().refine(v => { const n = parseInt(v); return !isNaN(n) && n >= 1 && n <= 28 }, 'Must be 1-28.'),
   rent_amount:      z.string().refine(v => { const n = parseFloat(v); return !isNaN(n) && n > 0 }, 'Must be positive.'),
 })
@@ -44,6 +45,7 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
       room_number:     student.room_number,
       age:             student.age?.toString() ?? '',
       address:         student.address ?? '',
+      date_of_joining: student.date_of_joining ? new Date(student.date_of_joining).toISOString().split('T')[0] : '',
       monthly_due_day: student.monthly_due_day.toString(),
       rent_amount:     student.rent_amount.toString(),
     }
@@ -113,6 +115,11 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
                   <FormMessage /></FormItem>
               )} />
             </div>
+            <FormField control={form.control} name='date_of_joining' render={({ field }) => (
+              <FormItem><FormLabel>Date of Joining *</FormLabel>
+                <FormControl><Input type="date" {...field} className='h-11' /></FormControl>
+                <FormMessage /></FormItem>
+            )} />
             <FormField control={form.control} name='address' render={({ field }) => (
               <FormItem><FormLabel>Address</FormLabel>
                 <FormControl><Input {...field} className='h-11' /></FormControl>

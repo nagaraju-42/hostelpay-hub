@@ -378,5 +378,6 @@ export default function PendingDuesPage() {
         )}
       </div>
     </div>
+    </div>
   )
 }

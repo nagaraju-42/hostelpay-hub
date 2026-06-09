@@ -12,6 +12,7 @@ type Filter = 'all' | 'pending' | 'overdue' | 'due_today' | 'paid'
 
 interface StudentWithStatus extends Student {
   payment_status?: string
+  last_paid_at?: string | null
 }
 
 // ── Status dot color mapping ──────────────────────────────────────────────
@@ -204,6 +205,38 @@ export default function StudentsPage() {
     const d = s.monthly_due_day
     const sfx = d >= 11 && d <= 13 ? 'th' : ['th','st','nd','rd'][d % 10 < 4 ? d % 10 : 0]
     return `${d}${sfx}`
+  }
+
+  function getCycleLabel(s: StudentWithStatus) {
+    const dueDay = s.monthly_due_day || 1
+    const joinDate = new Date(s.date_of_joining)
+    const now = new Date()
+    
+    const refDate = now < joinDate ? joinDate : now
+
+    let cycleStart = new Date(refDate.getFullYear(), refDate.getMonth(), dueDay)
+    if (refDate.getDate() < dueDay) {
+      cycleStart.setMonth(cycleStart.getMonth() - 1)
+    }
+    
+    // Ensure the cycle doesn't logically start before they even joined
+    if (cycleStart < joinDate && now < joinDate) {
+      cycleStart = new Date(joinDate.getFullYear(), joinDate.getMonth(), dueDay)
+      if (joinDate.getDate() > dueDay) {
+        cycleStart.setMonth(cycleStart.getMonth() + 1)
+      }
+    }
+
+    const cycleEnd = new Date(cycleStart)
+    cycleEnd.setMonth(cycleEnd.getMonth() + 1)
+
+    const fmt = (d: Date) => {
+      const day = d.getDate()
+      const sfx = day >= 11 && day <= 13 ? 'th' : ['th','st','nd','rd'][day % 10 < 4 ? day % 10 : 0]
+      return `${day}${sfx} ${d.toLocaleString('en-US', { month: 'short' })}`
+    }
+
+    return `${fmt(cycleStart)} - ${fmt(cycleEnd)}`
   }
 
   // ── TopBar right slot ──────────────────────────────────────────────────
@@ -404,10 +437,25 @@ export default function StudentsPage() {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <StatusBadge label={badgeLbl} type={badgeType} />
-                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, fontFamily: '"DM Sans", sans-serif' }}>
-                        Due: {getDueDateLabel(s)}
+                      <StatusBadge label={status === 'paid' ? 'Paid this month' : badgeLbl} type={badgeType} />
+                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 6, fontFamily: '"DM Sans", sans-serif' }}>
+                        Cycle: {getCycleLabel(s)}
                       </div>
+                      {s.payment_status === 'paid' && s.last_paid_at && (
+                        <div style={{ fontSize: 10, color: '#10B981', marginTop: 2, fontFamily: '"DM Sans", sans-serif', fontWeight: 600 }}>
+                          Paid on {new Date(s.last_paid_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                        </div>
+                      )}
+                      {s.payment_status === 'overdue' && (
+                        <div style={{ fontSize: 10, color: '#EF4444', marginTop: 2, fontFamily: '"DM Sans", sans-serif', fontWeight: 600 }}>
+                          Due: {getDueDateLabel(s)}
+                        </div>
+                      )}
+                      {(s.payment_status === 'upcoming' || s.payment_status === 'due_today') && (
+                        <div style={{ fontSize: 10, color: '#F59E0B', marginTop: 2, fontFamily: '"DM Sans", sans-serif', fontWeight: 600 }}>
+                          Due: {getDueDateLabel(s)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )

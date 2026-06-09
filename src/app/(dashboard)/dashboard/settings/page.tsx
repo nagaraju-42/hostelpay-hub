@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { QRCodeSVG } from 'qrcode.react'
 import { TopBar } from '@/components/mobile/TopBar'
 import type { HostelOwner } from '@/types'
+import { Download, CreditCard, ChevronRight } from 'lucide-react'
 
 // ── Editable field component ──────────────────────────────────────────────
 function EditableField({
@@ -472,30 +473,31 @@ export default function SettingsPage() {
           </div>
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '0 16px' }}>
             {[
-              { icon: '📤', label: 'Export reports',   sub: 'Download payment data', href: '/dashboard/export' },
-              { icon: '📊', label: 'Payment history',  sub: 'View all transactions',  href: '/dashboard/history' },
+              { icon: Download, label: 'Export reports',   sub: 'Download payment data', href: '/dashboard/export' },
+              { icon: CreditCard, label: 'Payment history',  sub: 'View all transactions',  href: '/dashboard/history' },
             ].map((item, i) => (
               <div
                 key={i}
                 onClick={() => router.push(item.href)}
+                className="group"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0',
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0',
                   borderBottom: i === 0 ? '1px solid #F1F5F9' : 'none',
                   cursor: 'pointer',
                 }}
               >
                 <div style={{
-                  width: 36, height: 36, borderRadius: 10, background: '#F8FAFC',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, flexShrink: 0,
-                }}>
-                  {item.icon}
+                  width: 38, height: 38, borderRadius: 10, background: '#EFF6FF', color: '#2563EB',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  transition: 'background 0.2s',
+                }} className="group-hover:bg-[#DBEAFE]">
+                  <item.icon size={20} strokeWidth={2.5} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>{item.label}</div>
-                  <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>{item.sub}</div>
+                <div style={{ flex: 1, transition: 'transform 0.2s' }} className="group-hover:translate-x-1">
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: '"DM Sans", sans-serif', color: '#1E293B', transition: 'color 0.2s' }} className="group-hover:text-[#2563EB]">{item.label}</div>
+                  <div style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>{item.sub}</div>
                 </div>
-                <span style={{ color: '#CBD5E1', fontSize: 16 }}>›</span>
+                <ChevronRight size={20} className="text-[#CBD5E1] group-hover:text-[#2563EB] transition-colors" />
               </div>
             ))}
           </div>

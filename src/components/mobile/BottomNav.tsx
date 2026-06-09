@@ -2,20 +2,20 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Home, Wallet, Users, BarChart2, Settings, type LucideIcon } from 'lucide-react'
 
 interface NavItem {
   href: string
-  icon: string
+  icon: LucideIcon
   label: string
-  activeIcon: string
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',              icon: '🏠', activeIcon: '🏠', label: 'Home'     },
-  { href: '/dashboard/pending-dues', icon: '💰', activeIcon: '💰', label: 'Dues'     },
-  { href: '/dashboard/students',     icon: '👥', activeIcon: '👥', label: 'Students' },
-  { href: '/dashboard/history',      icon: '📊', activeIcon: '📊', label: 'History'  },
-  { href: '/dashboard/settings',     icon: '⚙️', activeIcon: '⚙️', label: 'Settings' },
+  { href: '/dashboard',              icon: Home, label: 'Home'     },
+  { href: '/dashboard/pending-dues', icon: Wallet, label: 'Dues'     },
+  { href: '/dashboard/students',     icon: Users, label: 'Students' },
+  { href: '/dashboard/history',      icon: BarChart2, label: 'History'  },
+  { href: '/dashboard/settings',     icon: Settings, label: 'Settings' },
 ]
 
 export function BottomNav() {
@@ -45,8 +45,8 @@ export function BottomNav() {
               href={item.href}
               className="flex flex-col items-center gap-[3px] flex-1 cursor-pointer transition-opacity active:opacity-70"
             >
-              <span style={{ fontSize: '20px', lineHeight: 1 }}>
-                {active ? item.activeIcon : item.icon}
+              <span style={{ color: active ? '#2563EB' : '#94A3B8', transition: 'color 0.2s' }}>
+                <item.icon size={22} strokeWidth={active ? 2.5 : 2} />
               </span>
               <span
                 style={{

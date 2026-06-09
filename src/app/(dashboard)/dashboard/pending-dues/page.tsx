@@ -91,7 +91,8 @@ export default function PendingDuesPage() {
         right={<div style={{ fontSize: 18, color: '#1E293B' }}>≡</div>}
       />
 
-      <div style={{ padding: '16px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ padding: '16px', flexShrink: 0 }}>
         {/* ── Big Summary Card ── */}
         <div style={{
           background: '#2563EB',
@@ -199,7 +200,7 @@ export default function PendingDuesPage() {
       </div>
 
       {/* ── Student List ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ padding: '0 16px 16px', flex: 1 }}>
 
         {loading ? (
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '0 14px' }}>

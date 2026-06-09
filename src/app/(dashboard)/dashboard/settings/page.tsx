@@ -57,7 +57,7 @@ function EditableField({
             onClick={handleSave}
             disabled={saving}
             style={{
-              background: '#0F2744', color: '#fff', border: 'none',
+              background: '#2563EB', color: '#fff', border: 'none',
               borderRadius: 8, padding: '7px 12px',
               fontSize: 12, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer',
               fontFamily: '"DM Sans", sans-serif', opacity: saving ? 0.7 : 1,
@@ -338,16 +338,16 @@ export default function SettingsPage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               style={{
-                width: '100%', background: uploading ? '#F1F5F9' : '#0F2744',
-                color: uploading ? '#64748B' : '#fff',
-                border: 'none', borderRadius: 10, padding: '12px',
-                fontSize: 13, fontWeight: 600, cursor: uploading ? 'not-allowed' : 'pointer',
+                width: '100%', background: uploading ? '#EFF6FF' : '#2563EB',
+                color: uploading ? '#2563EB' : '#fff',
+                border: 'none', borderRadius: 10, padding: '14px',
+                fontSize: 14, fontWeight: 600, cursor: uploading ? 'not-allowed' : 'pointer',
                 fontFamily: '"DM Sans", sans-serif',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxSizing: 'border-box', marginBottom: 12,
+                boxSizing: 'border-box', marginBottom: 16,
               }}
             >
-              {uploading ? '⏳ Uploading…' : '📤 Upload QR Image'}
+              {uploading ? '⏳ Uploading…' : 'Upload New QR'}
             </button>
 
             {/* QR note */}
@@ -380,26 +380,30 @@ export default function SettingsPage() {
             </div>
 
             {/* OTP display */}
-            <div style={{ textAlign: 'center', marginBottom: 14 }}>
-              {otpVisible ? (
-                <div style={{
-                  fontSize: 34, fontWeight: 700, letterSpacing: 10,
-                  fontFamily: 'monospace', color: '#0F2744',
-                  background: '#F8FAFC', borderRadius: 12, padding: '14px 20px',
-                  border: '1.5px solid #E2E8F0', display: 'inline-block',
-                }}>
-                  {owner?.hostel_otp ?? '——————'}
-                </div>
-              ) : (
-                <div style={{
-                  fontSize: 34, fontWeight: 700, letterSpacing: 10,
-                  fontFamily: 'monospace', color: '#CBD5E1',
-                  background: '#F8FAFC', borderRadius: 12, padding: '14px 20px',
-                  border: '1.5px solid #E2E8F0', display: 'inline-block',
-                }}>
-                  ••••••
-                </div>
-              )}
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                {otpVisible ? (
+                  (owner?.hostel_otp ?? '      ').split('').map((char, i) => (
+                    <div key={i} style={{
+                      width: 44, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
+                      fontSize: 24, fontWeight: 700, color: '#1E293B', fontFamily: '"DM Sans", sans-serif',
+                    }}>
+                      {char}
+                    </div>
+                  ))
+                ) : (
+                  [...Array(6)].map((_, i) => (
+                    <div key={i} style={{
+                      width: 44, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
+                      fontSize: 24, fontWeight: 700, color: '#CBD5E1', fontFamily: '"DM Sans", sans-serif',
+                    }}>
+                      •
+                    </div>
+                  ))
+                )}
+              </div>
               <div style={{ marginTop: 10, display: 'flex', gap: 8, justifyContent: 'center' }}>
                 <button
                   onClick={() => setOtpVisible(v => !v)}
@@ -414,8 +418,8 @@ export default function SettingsPage() {
                 <button
                   onClick={copyOtp}
                   style={{
-                    background: '#0F2744', color: '#fff', border: 'none',
-                    borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600,
+                    background: '#2563EB', color: '#fff', border: 'none',
+                    borderRadius: 8, padding: '10px 16px', fontSize: 13, fontWeight: 600,
                     cursor: 'pointer', fontFamily: '"DM Sans", sans-serif',
                   }}
                 >
@@ -447,9 +451,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => window.print()}
                     style={{
-                      background: '#FEF3C7', color: '#92400E',
-                      border: '1px solid #FDE68A', borderRadius: 8,
-                      padding: '8px 16px', fontSize: 12, fontWeight: 600,
+                      background: 'transparent', color: '#F59E0B',
+                      border: '1px solid #F59E0B', borderRadius: 8,
+                      padding: '10px 20px', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: '"DM Sans", sans-serif',
                     }}
                   >

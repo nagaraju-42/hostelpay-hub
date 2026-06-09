@@ -70,37 +70,37 @@ export default function HistoryPage() {
 
       {/* Summary Cards */}
       <div style={{
-        background: '#F8FAFC', padding: '12px 16px',
-        borderBottom: '1px solid #E2E8F0',
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9,
+        background: '#F8FAFC', padding: '16px',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
         flexShrink: 0,
       }}>
-        <div style={{ background: '#fff', borderRadius: 12, padding: '10px 14px', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>Total collected</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', fontWeight: 500 }}>Total Collected</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#10B981', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>
             {loading ? '…' : `₹${totalCollected.toLocaleString('en-IN')}`}
           </div>
         </div>
-        <div style={{ background: '#fff', borderRadius: 12, padding: '10px 14px', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>Entries</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#0F2744', fontFamily: '"DM Serif Display", serif' }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', fontWeight: 500 }}>Entries</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#1E293B', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>
             {loading ? '…' : payments.length}
           </div>
         </div>
       </div>
 
       {/* Month Tabs */}
-      <div style={{ padding: '8px 16px', display: 'flex', gap: 7, flexShrink: 0 }}>
+      <div style={{ padding: '4px 16px', display: 'flex', gap: 8, flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
         {monthOptions.map(m => (
           <button
             key={m.value}
             onClick={() => setSelectedMonth(m.value)}
             style={{
-              padding: '5px 13px', borderRadius: 20, border: 'none',
-              background: selectedMonth === m.value ? '#0F2744' : '#F1F5F9',
+              padding: '8px 16px', borderRadius: 20, border: '1px solid',
+              borderColor: selectedMonth === m.value ? '#0F2744' : '#E2E8F0',
+              background: selectedMonth === m.value ? '#0F2744' : '#fff',
               color:      selectedMonth === m.value ? '#fff'    : '#64748B',
-              fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              fontFamily: '"DM Sans", sans-serif',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: '"DM Sans", sans-serif', whiteSpace: 'nowrap'
             }}
           >
             {m.label}
@@ -140,10 +140,10 @@ export default function HistoryPage() {
         ) : (
           grouped.map((grp, gi) => (
             <div key={gi} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 7, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 8, fontFamily: '"DM Sans", sans-serif' }}>
                 {grp.date}
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '0 16px' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: '0 16px' }}>
                 {grp.entries.map((p, i) => {
                   const name     = (p as any).student_name ?? 'Student'
                   const room     = (p as any).room_number  ?? '—'
@@ -155,24 +155,25 @@ export default function HistoryPage() {
                     <div
                       key={p.id}
                       style={{
-                        display: 'flex', alignItems: 'center', padding: '11px 0',
+                        display: 'flex', alignItems: 'center', padding: '16px 0',
                         borderBottom: isLast ? 'none' : '1px solid #F1F5F9',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
                         <div style={{
-                          width: 34, height: 34, background: '#ECFDF5',
-                          borderRadius: '50%', display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', fontSize: 14, flexShrink: 0,
+                          width: 36, height: 36, background: '#ECFDF5',
+                          borderRadius: 8, display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', fontSize: 16, flexShrink: 0,
+                          border: '1px solid #A7F3D0'
                         }}>{icon}</div>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>{name}</div>
-                          <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
-                            Room {room} · {mode.toUpperCase()}{paidTime ? ` · ${paidTime}` : ''}
+                          <div style={{ fontSize: 14, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>{name}</div>
+                          <div style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>
+                            Room {room} • {mode.toUpperCase()}{paidTime ? ` • ${paidTime}` : ''}
                           </div>
                         </div>
                       </div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981', fontFamily: '"DM Sans", sans-serif' }}>
                         +₹{Number(p.amount_paid).toLocaleString('en-IN')}
                       </div>
                     </div>

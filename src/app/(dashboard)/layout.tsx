@@ -17,10 +17,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           maxWidth: 430,
           marginLeft: 'auto',
           marginRight: 'auto',
-          minHeight: '100dvh',
+          height: '100dvh',
           display: 'flex',
           flexDirection: 'column',
           background: '#F8FAFC',
+          position: 'relative',
         }}
       >
         {isImpersonating && (
@@ -35,7 +36,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </div>
 
         {/* Sticky bottom nav */}
-        <BottomNav />
+        <div style={{ position: 'sticky', bottom: 0, zIndex: 50, width: '100%' }}>
+          <BottomNav />
+        </div>
       </div>
     </div>
   )

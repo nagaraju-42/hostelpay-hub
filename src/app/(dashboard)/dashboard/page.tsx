@@ -86,33 +86,32 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? 'Good morning 👋' : hour < 17 ? 'Good afternoon 👋' : 'Good evening 👋'
 
   const QUICK_ACTIONS = [
-    { icon: '➕', label: 'Add student',    bg: '#0F2744', txt: '#fff',     href: '/dashboard/students/new' },
-    { icon: '💰', label: 'Pending dues',   bg: '#FEF2F2', txt: '#991B1B',  href: '/dashboard/pending-dues' },
-    { icon: '👥', label: 'All students',   bg: '#ECFDF5', txt: '#065F46',  href: '/dashboard/students'    },
-    { icon: '📥', label: 'Export report',  bg: '#EDE9FE', txt: '#5B21B6',  href: '/dashboard/export'      },
+    { icon: '➕', label: 'Add student',    bg: '#EFF6FF', txt: '#2563EB', href: '/dashboard/students/new' },
+    { icon: '⚠️', label: 'Pending dues',   bg: '#EFF6FF', txt: '#2563EB', href: '/dashboard/pending-dues' },
+    { icon: '👥', label: 'All students',   bg: '#EFF6FF', txt: '#2563EB', href: '/dashboard/students'    },
+    { icon: '📥', label: 'Export report',  bg: '#EFF6FF', txt: '#2563EB', href: '/dashboard/export'      },
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', background: '#F8FAFC' }}>
 
       {/* ── Top Bar ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0F2744 0%, #163354 100%)',
-        padding: '14px 16px',
-        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+        background: '#FFFFFF',
+        padding: '16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: '"DM Sans", sans-serif' }}>
+        <div style={{ fontSize: 20, color: '#1E293B', cursor: 'pointer' }}>≡</div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', fontWeight: 500 }}>
             {greeting}
           </div>
-          <div style={{ fontSize: 16, fontWeight: 400, color: '#fff', fontFamily: '"DM Serif Display", serif' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#1E293B', fontFamily: '"DM Sans", sans-serif' }}>
             {hostelName}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <NotificationBell />
-          <MobileAvatar initials={initials} color={avatarColor} size={34} />
-        </div>
+        <NotificationBell />
       </div>
 
       {/* ── Scrollable Content ── */}
@@ -120,67 +119,83 @@ export default function DashboardPage() {
 
         {/* ── Alert Banner ── */}
         {totalDue > 0 && (
-          <button
-            onClick={() => router.push('/dashboard/pending-dues')}
-            style={{
-              width: '100%', textAlign: 'left',
-              background: '#FEF3C7',
-              borderTop: 'none', borderRight: 'none', borderBottom: 'none',
-              borderLeft: '4px solid #F59E0B',
-              padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-              cursor: 'pointer',
-            }}
-          >
-            <span style={{ fontSize: 18 }}>⚠️</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#92400E', fontFamily: '"DM Sans", sans-serif' }}>
-                {totalDue} payment{totalDue > 1 ? 's' : ''} due today
+          <div style={{ padding: '16px 16px 0' }}>
+            <button
+              onClick={() => router.push('/dashboard/pending-dues')}
+              style={{
+                width: '100%', textAlign: 'left',
+                background: '#FFFFFF',
+                borderRadius: 12,
+                border: '1px solid #FECACA',
+                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.06)',
+                padding: '16px', display: 'flex', alignItems: 'center', gap: 14,
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ color: '#DC2626', fontSize: 24 }}>⚠️</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: '"DM Sans", sans-serif' }}>
+                  {totalDue} payment{totalDue > 1 ? 's' : ''} due today
+                </div>
+                <div style={{ fontSize: 13, color: '#DC2626', fontFamily: '"DM Sans", sans-serif', fontWeight: 600, marginTop: 4 }}>
+                  Tap to view &amp; collect →
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: '#92400E', fontFamily: '"DM Sans", sans-serif' }}>
-                Tap to view &amp; collect →
-              </div>
-            </div>
-          </button>
+              <div style={{ color: '#DC2626', fontSize: 16, fontWeight: 'bold' }}>›</div>
+            </button>
+          </div>
         )}
 
         {/* ── Stats Row ── */}
-        <div style={{ padding: '14px 16px', display: 'flex', gap: 9 }}>
+        <div style={{ padding: '20px 16px', display: 'flex', gap: 10 }}>
           {loading ? (
             <>
               {[...Array(4)].map((_, i) => (
-                <div key={i} style={{ flex: 1, height: 64, background: '#E2E8F0', borderRadius: 12, animation: 'pulse 1.5s infinite' }} />
+                <div key={i} style={{ flex: 1, height: 76, background: '#E2E8F0', borderRadius: 12, animation: 'pulse 1.5s infinite' }} />
               ))}
             </>
           ) : (
             <>
-              <StatCard value={totalStudents}  label="Total students" color="#0F2744"  />
-              <StatCard value={collectedMTD}   label="Collected MTD"  color="#059669"  />
-              <StatCard value={dueToday.length} label="Due today"     color="#E24B4A"  />
-              <StatCard value={pendingCount}    label="Pending"       color="#F59E0B"  />
+              {/* Custom stat blocks matching the mockup */}
+              <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '12px 8px', textAlign: 'center', border: '1px solid #E2E8F0', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#2563EB', fontFamily: '"DM Sans", sans-serif' }}>{totalStudents}</div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>Total students</div>
+              </div>
+              <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '12px 8px', textAlign: 'center', border: '1px solid #E2E8F0', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#10B981', fontFamily: '"DM Sans", sans-serif' }}>{collectedMTD}</div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>Collected MTD</div>
+              </div>
+              <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '12px 8px', textAlign: 'center', border: '1px solid #E2E8F0', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#EF4444', fontFamily: '"DM Sans", sans-serif' }}>{dueToday.length}</div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>Due today</div>
+              </div>
+              <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '12px 8px', textAlign: 'center', border: '1px solid #E2E8F0', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#F59E0B', fontFamily: '"DM Sans", sans-serif' }}>{pendingCount}</div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>Pending</div>
+              </div>
             </>
           )}
         </div>
 
         {/* ── Quick Actions ── */}
-        <div style={{ padding: '0 16px 14px' }}>
+        <div style={{ padding: '0 16px 20px' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, color: '#64748B',
-            marginBottom: 9, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px',
+            fontSize: 14, fontWeight: 700, color: '#1E293B',
+            marginBottom: 12, fontFamily: '"DM Sans", sans-serif',
           }}>
-            QUICK ACTIONS
+            Quick Actions
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {QUICK_ACTIONS.map(q => (
               <button
                 key={q.label}
                 onClick={() => router.push(q.href)}
                 style={{
                   background: q.bg, color: q.txt, border: 'none',
-                  borderRadius: 12, padding: '13px 12px',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  borderRadius: 12, padding: '14px 16px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
                   fontFamily: '"DM Sans", sans-serif',
-                  minHeight: 44, textAlign: 'left',
                   transition: 'transform 0.1s, opacity 0.1s',
                 }}
                 onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
@@ -195,28 +210,36 @@ export default function DashboardPage() {
         {/* ── Recent Payments ── */}
         <div style={{ padding: '0 16px 24px' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, color: '#64748B',
-            marginBottom: 9, fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 12,
           }}>
-            RECENT PAYMENTS
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', fontFamily: '"DM Sans", sans-serif' }}>
+              Recent Payments
+            </div>
+            <div
+              onClick={() => router.push('/dashboard/history')}
+              style={{ fontSize: 12, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: '"DM Sans", sans-serif' }}
+            >
+              View all
+            </div>
           </div>
 
           {loading ? (
-            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '16px' }}>
+            <div style={{ background: '#fff', borderRadius: 14, padding: '16px', border: '1px solid #E2E8F0' }}>
               {[...Array(2)].map((_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: i === 0 ? '1px solid #F1F5F9' : 'none' }}>
-                  <div style={{ width: 40, height: 40, background: '#E2E8F0', borderRadius: '50%' }} />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: i === 0 ? '1px solid #F1F5F9' : 'none' }}>
+                  <div style={{ width: 44, height: 44, background: '#E2E8F0', borderRadius: '50%' }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ height: 13, width: 120, background: '#E2E8F0', borderRadius: 6, marginBottom: 4 }} />
-                    <div style={{ height: 11, width: 80,  background: '#F1F5F9', borderRadius: 6 }} />
+                    <div style={{ height: 14, width: 130, background: '#E2E8F0', borderRadius: 6, marginBottom: 6 }} />
+                    <div style={{ height: 12, width: 90,  background: '#F1F5F9', borderRadius: 6 }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : recentPayments.length === 0 ? (
             <div style={{
-              background: '#fff', borderRadius: 14, border: '1px dashed #E2E8F0',
-              padding: '24px 16px', textAlign: 'center',
+              background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0',
+              padding: '32px 16px', textAlign: 'center',
               fontSize: 13, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif',
             }}>
               No payments recorded yet
@@ -233,35 +256,31 @@ export default function DashboardPage() {
                 const col        = colorFromName(name)
                 const amt        = `+₹${Number(p.amount_paid).toLocaleString('en-IN')}`
                 const isLast     = i === recentPayments.slice(0, 5).length - 1
-                const monthInfo  = p.notes?.replace('Paid for: ', '') || ''
                 return (
                   <div
                     key={p.id}
                     style={{
-                      display: 'flex', alignItems: 'center', padding: '11px 0',
+                      display: 'flex', alignItems: 'center', padding: '14px 0',
                       borderBottom: isLast ? 'none' : '1px solid #F1F5F9',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-                      <MobileAvatar initials={initials} color={col} size={40} />
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>
-                          {name}
-                        </div>
-                        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>
-                          Room {room} {monthInfo ? `· for ${monthInfo}` : ''}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>
-                          Paid on {paidAt}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
+                        <div style={{
+                          width: 36, height: 36, background: '#ECFDF5',
+                          borderRadius: 8, display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', fontSize: 16, flexShrink: 0,
+                          border: '1px solid #A7F3D0'
+                        }}>💸</div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>{name}</div>
+                          <div style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>
+                            Room {room} • Paid on {paidAt}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#059669', fontFamily: '"DM Serif Display", serif' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981', fontFamily: '"DM Sans", sans-serif' }}>
                         {amt}
                       </div>
-                      <StatusBadge label="Paid" type="green" />
-                    </div>
                   </div>
                 )
               })}

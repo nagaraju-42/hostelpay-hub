@@ -53,7 +53,7 @@ export function BottomNav() {
                   fontSize: '10px',
                   fontFamily: '"DM Sans", sans-serif',
                   fontWeight: active ? 700 : 400,
-                  color: active ? '#0F2744' : '#94A3B8',
+                  color: active ? '#2563EB' : '#94A3B8',
                   letterSpacing: '0.2px',
                 }}
               >

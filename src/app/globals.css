@@ -10,6 +10,8 @@
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
 :root {
   /* Brand */
+  --primary-blue: #2563EB;
+  --primary-blue-dark: #1D4ED8;
   --navy:        #0F2744;
   --navy-2:      #163354;
   --navy-3:      #1B3D62;
@@ -18,13 +20,14 @@
   --amber-txt:   #92400E;
 
   /* Semantic */
-  --green:       #059669;
+  --green:       #10B981;
   --green-bg:    #ECFDF5;
   --green-txt:   #065F46;
+  --red:         #EF4444;
   --red-bg:      #FEF2F2;
   --red-txt:     #991B1B;
-  --blue-bg:     #E6F1FB;
-  --blue-txt:    #185FA5;
+  --blue-bg:     #EFF6FF;
+  --blue-txt:    #1E40AF;
   --purple-bg:   #EDE9FE;
   --purple-txt:  #5B21B6;
   --coral-bg:    #FAECE7;
@@ -46,7 +49,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #0F2744;
+  --primary: #2563EB;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -56,7 +59,7 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --input: oklch(0.922 0 0);
-  --ring: #0F2744;
+  --ring: #2563EB;
   --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);

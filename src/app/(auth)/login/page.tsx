@@ -42,56 +42,52 @@ export default function LoginPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
 
-      {/* ── Hero ── */}
+      {/* ── Header ── */}
       <div style={{
-        background: 'linear-gradient(160deg, #0F2744 0%, #163354 100%)',
-        padding: '52px 28px 44px',
+        padding: '60px 24px 30px',
         textAlign: 'center',
+        background: '#fff',
       }}>
         {/* Icon */}
         <div style={{
-          width: 72, height: 72,
-          background: '#F59E0B',
-          borderRadius: 20,
+          width: 64, height: 64,
+          background: '#EFF6FF',
+          borderRadius: 16,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 18px',
-          fontSize: 36,
-          boxShadow: '0 8px 24px rgba(245,158,11,0.35)',
+          margin: '0 auto 20px',
+          fontSize: 32,
         }}>
           🏨
         </div>
 
-        {/* Logotype */}
         <div style={{
-          fontSize: 28,
+          fontSize: 24,
           fontWeight: 700,
-          fontFamily: '"DM Serif Display", serif',
-          color: '#fff',
+          fontFamily: '"DM Sans", sans-serif',
+          color: '#1E293B',
           letterSpacing: '-0.5px',
         }}>
-          HostelPay<span style={{ color: '#F59E0B' }}>Hub</span>
+          Sign in to HostelPay Hub
         </div>
 
         <div style={{
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.45)',
-          marginTop: 6,
+          fontSize: 14,
+          color: '#64748B',
+          marginTop: 8,
           fontFamily: '"DM Sans", sans-serif',
         }}>
-          Smart hostel payment management
+          Enter your registered email and password to continue
         </div>
       </div>
 
       {/* ── Form ── */}
       <div style={{
-        padding: '28px 22px',
+        padding: '0 24px 24px',
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
+        gap: 20,
         background: '#fff',
-        borderRadius: '20px 20px 0 0',
-        marginTop: -16,
       }}>
 
         {/* Phone / Email */}
@@ -199,34 +195,31 @@ export default function LoginPage() {
           disabled={loading}
           suppressHydrationWarning
           style={{
-            background: loading ? '#334155' : '#0F2744',
+            background: loading ? '#93C5FD' : '#2563EB',
             color: '#fff',
             border: 'none',
-            padding: '15px',
+            padding: '16px',
             borderRadius: 12,
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: 600,
             fontFamily: '"DM Sans", sans-serif',
             cursor: loading ? 'not-allowed' : 'pointer',
-            marginTop: 4,
+            marginTop: 8,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             transition: 'background 0.2s',
-            minHeight: 50,
+            minHeight: 52,
           }}
         >
           {loading
             ? <><Loader2 className="w-4 h-4 animate-spin" /> Logging in…</>
-            : <>🔑 Login to Dashboard</>
+            : <>Continue</>
           }
         </button>
 
         {/* Footer */}
         <div style={{ marginTop: 'auto', textAlign: 'center', paddingTop: 24 }}>
-          <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>
-            Secure owner login only
-          </div>
-          <div style={{ fontSize: 11, color: '#185FA5', fontFamily: '"DM Sans", sans-serif', marginTop: 4, cursor: 'pointer' }}>
-            New hostel? Contact support
+          <div style={{ fontSize: 12, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', padding: '0 20px', lineHeight: 1.5 }}>
+            By continuing, you agree to our Terms of Service and Privacy Policy
           </div>
         </div>
       </div>

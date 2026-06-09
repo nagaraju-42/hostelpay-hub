@@ -41,28 +41,28 @@ function RoomCard({
       onClick={onClick}
       style={{
         background: '#fff',
-        border: `1.5px solid ${highlighted ? '#F59E0B' : '#E2E8F0'}`,
-        borderRadius: 14,
-        padding: '14px 12px',
+        border: `1px solid ${highlighted ? '#2563EB' : '#E2E8F0'}`,
+        borderRadius: 12,
+        padding: '16px 14px',
         cursor: 'pointer',
         boxShadow: highlighted
-          ? '0 0 0 3px rgba(245,158,11,0.12), 0 2px 8px rgba(0,0,0,0.06)'
-          : '0 1px 4px rgba(0,0,0,0.05)',
+          ? '0 0 0 3px rgba(37,99,235,0.12), 0 2px 8px rgba(0,0,0,0.06)'
+          : '0 1px 2px rgba(0,0,0,0.02)',
         transition: 'box-shadow 0.15s, border-color 0.15s',
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
-        minHeight: 88,
+        gap: 8,
+        minHeight: 100,
       }}
     >
       {/* Room number */}
       <div
         style={{
-          fontSize: 22,
-          fontFamily: '"DM Serif Display", serif',
-          color: '#0F2744',
-          lineHeight: 1.1,
-          fontWeight: 400,
+          fontSize: 20,
+          fontFamily: '"DM Sans", sans-serif',
+          color: '#1E293B',
+          lineHeight: 1,
+          fontWeight: 700,
         }}
       >
         {room}
@@ -70,22 +70,23 @@ function RoomCard({
       {/* Student count */}
       <div
         style={{
-          fontSize: 11,
-          color: '#94A3B8',
+          fontSize: 12,
+          color: '#10B981',
           fontFamily: '"DM Sans", sans-serif',
+          fontWeight: 500,
         }}
       >
         {students.length} student{students.length !== 1 ? 's' : ''}
       </div>
       {/* Status dot row */}
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 2 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
         {students.map((s) => (
           <div
             key={s.id}
             title={`${s.full_name}: ${statusLabel(s.payment_status ?? 'upcoming')}`}
             style={{
-              width: 9,
-              height: 9,
+              width: 8,
+              height: 8,
               borderRadius: '50%',
               background: statusDotColor(s.payment_status),
               flexShrink: 0,
@@ -208,29 +209,29 @@ export default function StudentsPage() {
   // ── TopBar right slot ──────────────────────────────────────────────────
   const topBarRight = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      {/* Import CSV */}
+      {/* Search Toggle / Import CSV */}
       <button
         suppressHydrationWarning
         onClick={() => router.push('/dashboard/students/import')}
         title="Import from CSV"
         style={{
-          background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+          background: '#2563EB', border: 'none', borderRadius: 8,
           width: 32, height: 32,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', fontSize: 15, color: '#fff',
+          cursor: 'pointer', fontSize: 16, color: '#fff',
         }}
-      >📥</button>
+      >🔍</button>
       {/* Grid toggle */}
       <button
         suppressHydrationWarning
         onClick={() => setView('grid')}
         title="Grid view"
         style={{
-          background: view === 'grid' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
-          border: 'none', borderRadius: 8,
+          background: view === 'grid' ? '#EFF6FF' : '#F8FAFC',
+          border: '1px solid #BFDBFE', borderRadius: 8,
           width: 32, height: 32,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', fontSize: 15, color: '#fff',
+          cursor: 'pointer', fontSize: 18, color: view === 'grid' ? '#2563EB' : '#94A3B8',
         }}
       >⊞</button>
       {/* List toggle */}
@@ -239,11 +240,11 @@ export default function StudentsPage() {
         onClick={() => setView('list')}
         title="List view"
         style={{
-          background: view === 'list' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
-          border: 'none', borderRadius: 8,
+          background: view === 'list' ? '#EFF6FF' : '#F8FAFC',
+          border: '1px solid #BFDBFE', borderRadius: 8,
           width: 32, height: 32,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', fontSize: 15, color: '#fff',
+          cursor: 'pointer', fontSize: 18, color: view === 'list' ? '#2563EB' : '#94A3B8',
         }}
       >☰</button>
       {/* Add student */}
@@ -252,12 +253,12 @@ export default function StudentsPage() {
         onClick={() => setSheetOpen(true)}
         title="Add student"
         style={{
-          background: '#F59E0B', border: 'none',
+          background: '#2563EB', border: 'none',
           borderRadius: 8, width: 32, height: 32,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', fontSize: 17,
+          cursor: 'pointer', fontSize: 20, color: '#fff', lineHeight: 1
         }}
-      >➕</button>
+      >+</button>
     </div>
   )
 
@@ -390,21 +391,21 @@ export default function StudentsPage() {
                     key={s.id}
                     onClick={() => router.push(`/dashboard/students/${s.id}`)}
                     style={{
-                      display: 'flex', alignItems: 'center', padding: '13px 0',
+                      display: 'flex', alignItems: 'center', padding: '14px 0',
                       borderBottom: isLast ? 'none' : '1px solid #F1F5F9',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-                      <MobileAvatar initials={initials} color={col} size={42} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                      <MobileAvatar initials={initials} color={col} size={44} />
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>{s.full_name}</div>
-                        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>Room {s.room_number} · {s.phone}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>{s.full_name}</div>
+                        <div style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>Room {s.room_number} • {s.phone}</div>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <StatusBadge label={badgeLbl} type={badgeType} />
-                      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 3, fontFamily: '"DM Sans", sans-serif' }}>
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, fontFamily: '"DM Sans", sans-serif' }}>
                         Due: {getDueDateLabel(s)}
                       </div>
                     </div>

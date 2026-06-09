@@ -72,11 +72,11 @@ export default function PendingDuesPage() {
     window.open(`tel:+91${cleanPhone}`, '_self')
   }
 
-  const TABS: { key: Tab; label: string; count: number; emoji: string; bg: string; activeBg: string; txt: string }[] = [
-    { key: 'overdue',   label: 'Overdue',   count: stats.overdue.length,  emoji: '🔴', bg: '#FEF2F2', activeBg: '#DC2626', txt: '#991B1B' },
-    { key: 'due_today', label: 'Due Today', count: stats.dueToday.length, emoji: '🟡', bg: '#FEF3C7', activeBg: '#D97706', txt: '#92400E' },
-    { key: 'upcoming',  label: 'Upcoming',  count: stats.upcoming.length, emoji: '🔵', bg: '#EFF6FF', activeBg: '#2563EB', txt: '#1E40AF' },
-    { key: 'paid',      label: 'Paid',      count: stats.paid.length,     emoji: '🟢', bg: '#ECFDF5', activeBg: '#059669', txt: '#065F46' },
+  const TABS: { key: Tab; label: string; count: number; bg: string; activeBg: string; txt: string }[] = [
+    { key: 'overdue',   label: 'Overdue',   count: stats.overdue.length,  bg: '#FEF2F2', activeBg: '#EF4444', txt: '#EF4444' },
+    { key: 'due_today', label: 'Due Today', count: stats.dueToday.length, bg: '#FEF3C7', activeBg: '#F59E0B', txt: '#F59E0B' },
+    { key: 'upcoming',  label: 'Upcoming',  count: stats.upcoming.length, bg: '#EFF6FF', activeBg: '#2563EB', txt: '#2563EB' },
+    { key: 'paid',      label: 'Paid',      count: stats.paid.length,     bg: '#ECFDF5', activeBg: '#10B981', txt: '#10B981' },
   ]
 
   const fmtMoney = (n: number) =>
@@ -88,69 +88,69 @@ export default function PendingDuesPage() {
         title="Pending Dues"
         sub={format(new Date(), 'EEE, d MMM yyyy')}
         backHref="/dashboard"
+        right={<div style={{ fontSize: 18, color: '#1E293B' }}>≡</div>}
       />
 
-      {/* ── Big Summary Card ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0F2744 0%, #1a3a5c 100%)',
-        padding: '18px 16px 20px',
-        flexShrink: 0,
-      }}>
+      <div style={{ padding: '16px' }}>
+        {/* ── Big Summary Card ── */}
         <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+          background: '#2563EB',
+          borderRadius: 16,
+          padding: '24px 20px',
+          boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.4)',
         }}>
-          <div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: '"DM Sans", sans-serif', letterSpacing: 1, textTransform: 'uppercase' }}>
-              Total Pending
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          }}>
+            <div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontFamily: '"DM Sans", sans-serif', fontWeight: 500 }}>
+                Total Pending
+              </div>
+              <div style={{
+                fontSize: 40, fontWeight: 700, color: '#fff',
+                fontFamily: '"DM Sans", sans-serif', marginTop: 4, letterSpacing: '-0.5px'
+              }}>
+                {loading ? '…' : fmtMoney(stats.totalOwed)}
+              </div>
             </div>
-            <div style={{
-              fontSize: 42, fontWeight: 700, color: stats.totalOwed > 0 ? '#F87171' : '#34D399',
-              fontFamily: '"DM Serif Display", serif', lineHeight: 1.1, marginTop: 2,
-            }}>
-              {loading ? '…' : fmtMoney(stats.totalOwed)}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontFamily: '"DM Sans", sans-serif' }}>
+                Collected this month
+              </div>
+              <div style={{
+                fontSize: 18, fontWeight: 700, color: '#fff',
+                fontFamily: '"DM Sans", sans-serif', marginTop: 4
+              }}>
+                {loading ? '…' : fmtMoney(stats.totalCollected)}
+              </div>
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: '"DM Sans", sans-serif' }}>
-              Collected this month
-            </div>
-            <div style={{
-              fontSize: 26, fontWeight: 700, color: '#34D399',
-              fontFamily: '"DM Serif Display", serif',
-            }}>
-              {loading ? '…' : fmtMoney(stats.totalCollected)}
-            </div>
-          </div>
-        </div>
 
-        {/* Mini stat pills */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-          {[
-            { label: 'Overdue', val: stats.overdue.length, col: '#F87171' },
-            { label: 'Due Today', val: stats.dueToday.length, col: '#FBBF24' },
-            { label: 'Upcoming', val: stats.upcoming.length, col: '#60A5FA' },
-            { label: 'Paid', val: stats.paid.length, col: '#34D399' },
-          ].map((p, i) => (
-            <div key={i} style={{
-              flex: 1, background: 'rgba(255,255,255,0.07)', borderRadius: 10,
-              padding: '8px 6px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: p.col, fontFamily: '"DM Serif Display", serif' }}>
-                {loading ? '…' : p.val}
+          {/* Mini stat pills matching mockup style */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 24, background: '#fff', borderRadius: 12, padding: '12px', justifyContent: 'space-between' }}>
+            {[
+              { label: 'Overdue', val: stats.overdue.length, col: '#EF4444' },
+              { label: 'Due Today', val: stats.dueToday.length, col: '#F59E0B' },
+              { label: 'Upcoming', val: stats.upcoming.length, col: '#2563EB' },
+              { label: 'Paid', val: stats.paid.length, col: '#10B981' },
+            ].map((p, i) => (
+              <div key={i} style={{ textAlign: 'center', flex: 1, borderRight: i < 3 ? '1px solid #F1F5F9' : 'none' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: p.col, fontFamily: '"DM Sans", sans-serif' }}>
+                  {loading ? '…' : p.val}
+                </div>
+                <div style={{ fontSize: 10, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 2, fontWeight: 500 }}>
+                  {p.label}
+                </div>
               </div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontFamily: '"DM Sans", sans-serif', marginTop: 1 }}>
-                {p.label}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── Tab Bar ── */}
       <div style={{
-        display: 'flex', gap: 6, padding: '10px 16px',
+        display: 'flex', gap: 8, padding: '0 16px 16px',
         overflowX: 'auto', flexShrink: 0,
-        background: '#F8FAFC', borderBottom: '1px solid #E2E8F0',
         scrollbarWidth: 'none',
       }}>
         {TABS.map(t => {
@@ -160,16 +160,16 @@ export default function PendingDuesPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               style={{
-                padding: '6px 14px', borderRadius: 20, border: 'none',
+                padding: '8px 16px', borderRadius: 20, border: 'none',
                 background: active ? t.activeBg : t.bg,
                 color: active ? '#fff' : t.txt,
-                fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+                fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
                 fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 4,
                 transition: 'all 0.15s',
               }}
             >
-              {t.emoji} {t.label} ({loading ? '…' : t.count})
+              {t.label} ({loading ? '…' : t.count})
             </button>
           )
         })}
@@ -247,60 +247,47 @@ export default function PendingDuesPage() {
                 <div
                   key={s.id}
                   style={{
-                    background: '#fff', borderRadius: 14,
-                    border: isOverdue ? '1px solid #FECACA' : '1px solid #E2E8F0',
+                    background: '#fff', borderRadius: 16,
+                    border: '1px solid #E2E8F0',
                     overflow: 'hidden',
-                    boxShadow: isOverdue ? '0 2px 8px rgba(220,38,38,0.08)' : 'none',
                   }}
                 >
                   {/* Main row */}
                   <div
                     style={{
-                      padding: '14px 14px 10px',
-                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '16px',
+                      display: 'flex', alignItems: 'flex-start', gap: 12,
                       cursor: 'pointer',
                     }}
                     onClick={() => router.push(`/dashboard/students/${s.id}`)}
                   >
-                    <MobileAvatar initials={initials} color={col} size={44} />
+                    <MobileAvatar initials={initials} color={col} size={48} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div style={{
-                          fontSize: 14, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                          fontSize: 15, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
                           color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>
                           {s.full_name}
                         </div>
-                        {!s.is_active && (
-                          <span style={{
-                            fontSize: 9, fontWeight: 700, background: '#FEE2E2', color: '#991B1B',
-                            borderRadius: 4, padding: '2px 5px', border: '1px solid #FECACA',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            Left Hostel
-                          </span>
-                        )}
                         {s.months_unpaid > 1 && (
                           <span style={{
-                            fontSize: 9, fontWeight: 800, background: '#DC2626', color: '#fff',
-                            borderRadius: 4, padding: '1px 5px', lineHeight: '14px',
+                            fontSize: 10, fontWeight: 700, background: '#EF4444', color: '#fff',
+                            borderRadius: 6, padding: '2px 6px',
                           }}>
                             {s.months_unpaid}M
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 1 }}>
-                        Room {s.room_number} · ₹{s.rent_amount.toLocaleString('en-IN')}/mo
+                      <div style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>
+                        Room {s.room_number} • ₹{s.rent_amount.toLocaleString('en-IN')}/mo
                       </div>
                       {s.last_paid_at ? (
-                        <div style={{ fontSize: 10, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>
                           Last paid: {format(new Date(s.last_paid_at), 'd MMM yyyy')}
-                          {s.days_since_payment !== null && s.days_since_payment > 30 && (
-                            <span style={{ color: '#DC2626', fontWeight: 600 }}> · {s.days_since_payment}d ago</span>
-                          )}
                         </div>
                       ) : (
-                        <div style={{ fontSize: 10, color: '#DC2626', fontFamily: '"DM Sans", sans-serif', fontWeight: 600, marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: '#EF4444', fontFamily: '"DM Sans", sans-serif', fontWeight: 600, marginTop: 4 }}>
                           Never paid
                         </div>
                       )}
@@ -309,14 +296,14 @@ export default function PendingDuesPage() {
                     {/* Amount owed */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{
-                        fontSize: isPaid ? 16 : 26, fontWeight: 700,
-                        color: isPaid ? '#059669' : '#DC2626',
-                        fontFamily: '"DM Serif Display", serif',
+                        fontSize: isPaid ? 18 : 20, fontWeight: 700,
+                        color: isPaid ? '#10B981' : '#EF4444',
+                        fontFamily: '"DM Sans", sans-serif',
                       }}>
                         {isPaid ? '✅' : `₹${s.total_owed.toLocaleString('en-IN')}`}
                       </div>
                       {!isPaid && s.months_unpaid > 0 && (
-                        <div style={{ fontSize: 9, color: '#991B1B', fontFamily: '"DM Sans", sans-serif', marginTop: 1 }}>
+                        <div style={{ fontSize: 11, color: '#EF4444', fontFamily: '"DM Sans", sans-serif', marginTop: 2, fontWeight: 500 }}>
                           {s.months_unpaid} month{s.months_unpaid > 1 ? 's' : ''}
                         </div>
                       )}
@@ -326,65 +313,60 @@ export default function PendingDuesPage() {
                   {/* Action buttons row */}
                   {!isPaid && (
                     <div style={{
-                      display: 'flex', gap: 6, padding: '0 14px 12px',
-                      borderTop: 'none',
+                      display: 'flex', gap: 8, padding: '0 16px 16px',
                     }}>
-                      {/* WhatsApp Student */}
                       <button
                         onClick={(e) => { e.stopPropagation(); openWhatsApp(s) }}
                         style={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                          background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 8,
-                          padding: '8px 4px', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, color: '#065F46',
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          background: '#ECFDF5', border: 'none', borderRadius: 8,
+                          padding: '10px 4px', cursor: 'pointer',
+                          fontSize: 12, fontWeight: 600, color: '#10B981',
                           fontFamily: '"DM Sans", sans-serif',
                         }}
                       >
-                        📱 WhatsApp
+                        <span style={{ fontSize: 14 }}>💬</span> WhatsApp
                       </button>
 
-                      {/* Call */}
                       <button
                         onClick={(e) => { e.stopPropagation(); callPhone(s.phone) }}
                         style={{
-                          flex: 0.6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                          background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8,
-                          padding: '8px 4px', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, color: '#1E40AF',
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          background: '#EFF6FF', border: 'none', borderRadius: 8,
+                          padding: '10px 4px', cursor: 'pointer',
+                          fontSize: 12, fontWeight: 600, color: '#2563EB',
                           fontFamily: '"DM Sans", sans-serif',
                         }}
                       >
-                        📞 Call
+                        <span style={{ fontSize: 14 }}>📞</span> Call
                       </button>
 
-                      {/* WhatsApp Parent (if available) */}
                       {s.parent_phone && (
                         <button
                           onClick={(e) => { e.stopPropagation(); openWhatsApp(s, true) }}
                           style={{
-                            flex: 0.7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                            background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8,
-                            padding: '8px 4px', cursor: 'pointer',
-                            fontSize: 10, fontWeight: 600, color: '#92400E',
+                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            background: '#FFF7ED', border: 'none', borderRadius: 8,
+                            padding: '10px 4px', cursor: 'pointer',
+                            fontSize: 12, fontWeight: 600, color: '#F59E0B',
                             fontFamily: '"DM Sans", sans-serif',
                           }}
                         >
-                          👤 Parent
+                          <span style={{ fontSize: 14 }}>👤</span> Parent
                         </button>
                       )}
 
-                      {/* Mark Paid */}
                       <button
                         onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/students/${s.id}/pay`) }}
                         style={{
-                          flex: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                          flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           background: '#0F2744', border: 'none', borderRadius: 8,
-                          padding: '8px 4px', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 700, color: '#fff',
+                          padding: '10px 4px', cursor: 'pointer',
+                          fontSize: 12, fontWeight: 600, color: '#fff',
                           fontFamily: '"DM Sans", sans-serif',
                         }}
                       >
-                        ✅ Paid
+                        <span style={{ fontSize: 14 }}>✔</span> Mark Paid
                       </button>
                     </div>
                   )}

@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: '/admin/owners',    icon: '🏢', label: 'Hostel Management'   },
   { href: '/admin/owners',    icon: '👥', label: 'Owner Accounts'      },
   { href: '/admin',           icon: '📈', label: 'Revenue Analytics'   },
+  { href: '/admin/audits',    icon: '🛡️', label: 'System Audits'       },
   { href: '/admin',           icon: '📤', label: 'Global Export'       },
 ]
 

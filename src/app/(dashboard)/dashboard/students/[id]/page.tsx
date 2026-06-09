@@ -10,9 +10,11 @@ import { StatusBadge, statusToBadgeType, statusLabel } from '@/components/mobile
 import { EditStudentSheet } from '@/components/students/EditStudentSheet'
 import { AddManualChargeSheet } from '@/components/students/AddManualChargeSheet'
 import { RecordPaymentSheet } from '@/components/students/RecordPaymentSheet'
+import { PaymentDetailsSheet } from '@/components/students/PaymentDetailsSheet'
 import type { StudentWithPayments } from '@/types'
-import { generateStudentLedger, getTodayIST, getPaymentStatus, getNextDueDate } from '@/lib/utils/due-calc'
+import { generateStudentLedger, getTodayIST, getPaymentStatus, getNextDueDate, calculateLedger } from '@/lib/utils/due-calc'
 import { downloadStudentLedgerPDF } from '@/lib/utils/pdf'
+import type { Payment } from '@/types'
 
 // ── Inline CopyButton component ───────────────────────────────────────────
 function CopyButton({ text }: { text: string }) {
@@ -62,6 +64,8 @@ export default function StudentProfilePage() {
   const [rejecting,    setRejecting]    = useState(false)
   const [showChargeSheet, setShowChargeSheet] = useState(false)
   const [showPaymentSheet, setShowPaymentSheet] = useState(false)
+  const [selectedPayment,  setSelectedPayment]  = useState<Payment | null>(null)
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false)
 
   async function fetchStudent() {
     const res = await fetch(`/api/students/${id}`)
@@ -176,6 +180,16 @@ export default function StudentProfilePage() {
   const nextDue = getNextDueDate(student.monthly_due_day, refDate)
   const nextDueStr = format(nextDue, 'd MMM')
 
+  const ledgerSummary = calculateLedger(
+    student.rent_amount,
+    student.monthly_due_day,
+    student.date_of_joining,
+    student.payments,
+    today,
+    student.date_of_leaving,
+    student.manual_charges
+  )
+
   const payStatus = getPaymentStatus(
     student.rent_amount,
     student.monthly_due_day,
@@ -262,7 +276,9 @@ export default function StudentProfilePage() {
         }}>
           {[
             { lbl: 'Monthly rent', val: `₹${Number(student.rent_amount).toLocaleString('en-IN')}`, col: '#0F2744' },
-            { lbl: 'Next due',     val: nextDueStr,  col: '#059669' },
+            ledgerSummary.totalOwed > 0 
+              ? { lbl: 'Pending Dues', val: `₹${ledgerSummary.totalOwed.toLocaleString('en-IN')}`, col: '#EF4444' }
+              : { lbl: 'Next due', val: nextDueStr, col: '#059669' },
             { lbl: 'Cycle day',    val: `${student.monthly_due_day}${getDaySuffix(student.monthly_due_day)}`, col: '#0F2744' },
           ].map((item, idx) => (
             <div key={idx} style={{
@@ -413,11 +429,14 @@ export default function StudentProfilePage() {
               </div>
             ) : (
               student.payments.slice(0, 5).map((p, i) => (
-                <div key={p.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 0',
-                  borderBottom: i < Math.min(student.payments.length, 5) - 1 ? '1px solid #F1F5F9' : 'none',
-                }}>
+                <div key={p.id} 
+                  onClick={() => { setSelectedPayment(p); setShowPaymentDetails(true); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 0',
+                    borderBottom: i < Math.min(student.payments.length, 5) - 1 ? '1px solid #F1F5F9' : 'none',
+                    cursor: 'pointer'
+                  }}>
                   <div style={{
                     width: 34, height: 34, background: '#ECFDF5',
                     borderRadius: '50%', display: 'flex',
@@ -425,7 +444,7 @@ export default function StudentProfilePage() {
                   }}>₹</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', color: '#1E293B' }}>
-                      {p.notes?.replace('Paid for: ', '') || format(new Date(p.paid_at), 'MMMM yyyy')}
+                      {p.notes?.replace('Paid for: ', '') || 'Rent Payment'}
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
                       {p.payment_mode.toUpperCase()} · Paid on {format(new Date(p.paid_at), 'd MMM yyyy')}
@@ -436,8 +455,8 @@ export default function StudentProfilePage() {
                       ₹{Number(p.amount_paid).toLocaleString('en-IN')}
                     </div>
                     <button
-                      onClick={() => handleDeletePayment(p.id)}
-                      style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', opacity: 0.6 }}
+                      onClick={(e) => { e.stopPropagation(); handleDeletePayment(p.id); }}
+                      style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: 4 }}
                       title="Delete payment"
                     >
                       🗑️
@@ -495,6 +514,12 @@ export default function StudentProfilePage() {
         open={showPaymentSheet}
         onOpenChange={setShowPaymentSheet}
         onSuccess={() => { setShowPaymentSheet(false); fetchStudent(); }}
+      />
+
+      <PaymentDetailsSheet
+        payment={selectedPayment}
+        open={showPaymentDetails}
+        onOpenChange={setShowPaymentDetails}
       />
     </div>
   )

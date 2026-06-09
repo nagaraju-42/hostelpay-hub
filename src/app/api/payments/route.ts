@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthSession } from '@/lib/auth'
-import { getCurrentCycleDueDate, getTodayIST } from '@/lib/utils/due-calc'
+import { getTodayIST, getCurrentCycleDueDate, getPendingMonths } from '@/lib/utils/due-calc'
 import type { Payment, ApiSuccess, ApiError } from '@/types'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -73,13 +73,34 @@ export async function POST(request: NextRequest) {
   // ── Verify student belongs to this owner (RLS + explicit check) ─────────
   const { data: student, error: studErr } = await supabase
     .from('students')
-    .select('id, owner_id, monthly_due_day, rent_amount, full_name')
+    .select('id, owner_id, monthly_due_day, rent_amount, full_name, date_of_joining, date_of_leaving')
     .eq('id', body.student_id)
     .eq('owner_id', user.id)
     .single()
  
   if (studErr || !student) {
     return NextResponse.json<ApiError>({ error: 'Student not found.' }, { status: 404 })
+  }
+
+  // Fetch payments separately to avoid embedded relation permission errors
+  const { data: payments } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('student_id', student.id)
+    .eq('owner_id', user.id)
+
+  // Fetch manual charges separately
+  const { data: manual_charges } = await supabase
+    .from('manual_charges')
+    .select('*')
+    .eq('student_id', student.id)
+    .eq('owner_id', user.id)
+
+  // Ensure these properties exist for the ledger calculation
+  const studentWithHistory = {
+    ...student,
+    payments: payments || [],
+    manual_charges: manual_charges || []
   }
   if (student.owner_id !== user.id) {
     return NextResponse.json<ApiError>({ error: 'Forbidden.' }, { status: 403 })
@@ -117,7 +138,33 @@ export async function POST(request: NextRequest) {
   }
  
   // ── Determine the due_date this payment covers ──────────────────────────
-  const dueDate = getCurrentCycleDueDate(student.monthly_due_day, today)
+  let dueDate = getCurrentCycleDueDate(studentWithHistory.monthly_due_day, today)
+  let autoNote = body.notes?.trim() || null
+
+  // If there is no custom note, dynamically figure out what cycle is being paid off
+  if (!body.notes?.trim()) {
+    const pending = getPendingMonths(
+      studentWithHistory.rent_amount,
+      studentWithHistory.monthly_due_day,
+      studentWithHistory.date_of_joining,
+      studentWithHistory.payments,
+      today,
+      studentWithHistory.date_of_leaving,
+      studentWithHistory.manual_charges
+    )
+    
+    // Reverse to get the oldest unpaid cycle first
+    const oldestPending = [...pending].reverse().find(m => m.amountOwed > 0)
+    
+    if (oldestPending) {
+      dueDate = oldestPending.cycleDue
+      autoNote = `Paid for: ${oldestPending.monthName}`
+    } else {
+      // If nothing is pending, it's an advance payment for the next cycle
+      dueDate = getCurrentCycleDueDate(studentWithHistory.monthly_due_day, today)
+      autoNote = 'Advance Payment'
+    }
+  }
  
   // ── Insert payment record ───────────────────────────────────────────────
   const { data: newPayment, error: insertErr } = await supabase
@@ -128,7 +175,7 @@ export async function POST(request: NextRequest) {
       amount_paid:  body.amount_paid,
       payment_mode: body.payment_mode,
       due_date:     dueDate.toISOString().split('T')[0],
-      notes:        body.notes?.trim() || null,
+      notes:        autoNote,
       paid_at:      finalPaidAt.toISOString(),
     })
     .select()

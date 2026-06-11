@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   // Fetch all students (active and inactive) for this owner
   const { data: allStudents, error: studErr } = await supabase
     .from('students')
-    .select('id, full_name, room_number, phone, rent_amount, monthly_due_day, date_of_joining, date_of_leaving, is_active')
+    .select('id, full_name, room_number, phone, rent_amount, monthly_due_day, date_of_joining, date_of_leaving, is_active, billing_type')
     .eq('owner_id', user.id)
     .order('room_number')
 
@@ -84,7 +84,8 @@ export async function GET(request: NextRequest) {
       studentPayments,
       today,
       student.date_of_leaving,
-      studentCharges
+      studentCharges,
+      student.billing_type || 'prepaid'
     )
 
     return {

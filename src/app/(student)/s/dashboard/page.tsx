@@ -165,7 +165,8 @@ export default function StudentDashboardPage() {
       payments,
       today,
       student.date_of_leaving,
-      manualCharges
+      manualCharges,
+      student.billing_type || 'prepaid'
     )
     pStatus = getPaymentStatus(
       student.rent_amount,
@@ -174,7 +175,8 @@ export default function StudentDashboardPage() {
       payments,
       today,
       student.date_of_leaving,
-      manualCharges
+      manualCharges,
+      student.billing_type || 'prepaid'
     )
     pendingMonths = getPendingMonths(
       student.rent_amount,
@@ -183,7 +185,8 @@ export default function StudentDashboardPage() {
       payments,
       today,
       student.date_of_leaving,
-      manualCharges
+      manualCharges,
+      student.billing_type || 'prepaid'
     )
   }
 
@@ -196,7 +199,8 @@ export default function StudentDashboardPage() {
       payments,
       getTodayIST(),
       student.date_of_leaving,
-      manualCharges
+      manualCharges,
+      student.billing_type || 'prepaid'
     )
     await downloadStudentLedgerPDF(
       student.id,
@@ -205,7 +209,8 @@ export default function StudentDashboardPage() {
       student.room_number,
       student.date_of_joining,
       student.rent_amount,
-      fullLedger
+      fullLedger,
+      student.billing_type || 'prepaid'
     )
   }
 

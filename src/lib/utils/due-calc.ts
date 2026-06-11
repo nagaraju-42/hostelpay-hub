@@ -71,7 +71,8 @@ export function calculateLedger(
   payments: Payment[],
   referenceDate: Date = getTodayIST(),
   leaveDateString?: string | null,
-  manualCharges?: ManualCharge[]
+  manualCharges?: ManualCharge[],
+  billingType: 'prepaid' | 'postpaid' = 'prepaid'
 ): Ledger {
   const rent = Number(studentRent) || 0
   if (rent <= 0) return { totalBilled: 0, totalPaid: 0, totalOwed: 0, monthsUnpaid: 0, isAdvance: false }
@@ -98,7 +99,12 @@ export function calculateLedger(
     const cycleDue = getCurrentCycleDueDate(dueDay, checkDate)
     cycleDue.setHours(0, 0, 0, 0)
     
-    if (cycleDue > endDate) continue
+    let invoiceDueDate = cycleDue
+    if (billingType === 'postpaid' && !leaveDate) {
+      invoiceDueDate = getNextDueDate(dueDay, cycleDue)
+    }
+    
+    if (invoiceDueDate > endDate) continue
     if (cycleDue < joinDate) break
  
     totalBilled += rent
@@ -146,7 +152,8 @@ export function getPendingMonths(
   payments: Payment[],
   referenceDate: Date = getTodayIST(),
   leaveDateString?: string | null,
-  manualCharges?: ManualCharge[]
+  manualCharges?: ManualCharge[],
+  billingType: 'prepaid' | 'postpaid' = 'prepaid'
 ): PendingMonth[] {
   const rent = Number(studentRent) || 0
   if (rent <= 0) return []
@@ -172,7 +179,12 @@ export function getPendingMonths(
     const cycleDue = getCurrentCycleDueDate(dueDay, checkDate)
     cycleDue.setHours(0, 0, 0, 0)
     
-    if (cycleDue > endDate) continue
+    let invoiceDueDate = cycleDue
+    if (billingType === 'postpaid' && !leaveDate) {
+      invoiceDueDate = getNextDueDate(dueDay, cycleDue)
+    }
+    
+    if (invoiceDueDate > endDate) continue
     if (cycleDue < joinDate) break
 
     const monthName = cycleDue.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -289,16 +301,16 @@ export function getPaymentStatus(
   payments: Payment[],
   referenceDate: Date = getTodayIST(),
   leaveDateString?: string | null,
-  manualCharges?: ManualCharge[]
+  manualCharges?: ManualCharge[],
+  billingType: 'prepaid' | 'postpaid' = 'prepaid'
 ): PaymentStatus {
   const joinDate = new Date(joinDateString)
   joinDate.setHours(0, 0, 0, 0)
+  const ledger = calculateLedger(studentRent, dueDay, joinDateString, payments, referenceDate, leaveDateString, manualCharges, billingType)
   const today = new Date(referenceDate)
   today.setHours(0, 0, 0, 0)
 
   if (today < joinDate) return 'upcoming'
-
-  const ledger = calculateLedger(studentRent, dueDay, joinDateString, payments, referenceDate, leaveDateString, manualCharges)
  
   if (ledger.totalOwed > 0) {
     const cycleStart = getCurrentCycleDueDate(dueDay, referenceDate)
@@ -336,11 +348,12 @@ export function generateStudentLedger(
   payments: Payment[],
   referenceDate: Date = getTodayIST(),
   leaveDateString?: string | null,
-  manualCharges?: ManualCharge[]
+  manualCharges?: ManualCharge[],
+  billingType: 'prepaid' | 'postpaid' = 'prepaid'
 ): LedgerTransaction[] {
   
   // Calculate pending months first to know which charges are paid
-  const pendingMonths = getPendingMonths(studentRent, dueDay, joinDateString, payments, referenceDate, leaveDateString, manualCharges)
+  const pendingMonths = getPendingMonths(studentRent, dueDay, joinDateString, payments, referenceDate, leaveDateString, manualCharges, billingType)
   const rent = Number(studentRent) || 0
   if (rent <= 0) return []
 
@@ -365,7 +378,12 @@ export function generateStudentLedger(
     const cycleDue = getCurrentCycleDueDate(dueDay, checkDate)
     cycleDue.setHours(0, 0, 0, 0)
     
-    if (cycleDue > endDate) continue
+    let invoiceDueDate = cycleDue
+    if (billingType === 'postpaid' && !leaveDate) {
+      invoiceDueDate = getNextDueDate(dueDay, cycleDue)
+    }
+    
+    if (invoiceDueDate > endDate) continue
     if (cycleDue < joinDate) break
 
     const monthName = cycleDue.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })

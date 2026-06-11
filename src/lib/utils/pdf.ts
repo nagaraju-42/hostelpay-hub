@@ -10,7 +10,8 @@ export async function downloadStudentLedgerPDF(
   roomNumber: string,
   joinDateString: string,
   rentAmount: number,
-  ledger: LedgerTransaction[]
+  ledger: LedgerTransaction[],
+  billingType: string = 'prepaid'
 ) {
   const doc = new jsPDF()
 
@@ -88,7 +89,7 @@ export async function downloadStudentLedgerPDF(
   doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2])
   doc.text(`Room: ${roomNumber}`, 14, 50)
   doc.text(`Joined: ${new Date(joinDateString).toLocaleDateString('en-IN')}`, 14, 55)
-  doc.text(`Monthly Rent: Rs. ${rentAmount.toLocaleString('en-IN')}`, 14, 60)
+  doc.text(`Monthly Rent: Rs. ${rentAmount.toLocaleString('en-IN')} (${billingType === 'postpaid' ? 'Postpaid' : 'Prepaid'})`, 14, 60)
 
   // Balance Summary (Right side box)
   const finalBalanceRow = ledger[ledger.length - 1]

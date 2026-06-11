@@ -29,6 +29,7 @@ const studentSchema = z.object({
   rent_amount:        z.string().refine(v => {
     const n = parseFloat(v); return !isNaN(n) && n > 0
   }, 'Must be a positive amount.'),
+  billing_type:       z.enum(['prepaid', 'postpaid']),
 })
  
 type StudentFormValues = z.infer<typeof studentSchema>
@@ -49,6 +50,7 @@ export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentShe
       email: '', room_number: '', age: '', address: '', aadhaar_number: '',
       date_of_joining: new Date().toISOString().split('T')[0],
       monthly_due_day: '', rent_amount: '',
+      billing_type: 'prepaid',
     }
   })
  
@@ -145,6 +147,39 @@ export function AddStudentSheet({ open, onOpenChange, onSuccess }: AddStudentShe
               <FormItem>
                 <FormLabel>Date of Joining *</FormLabel>
                 <FormControl><Input type='date' {...field} className='h-11' /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+            <FormField control={form.control} name='billing_type' render={({ field }) => (
+              <FormItem>
+                <FormLabel>Billing Model *</FormLabel>
+                <FormControl>
+                  <div className="flex gap-4 p-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name={field.name} 
+                        value="prepaid" 
+                        checked={field.value === 'prepaid'}
+                        onChange={() => field.onChange('prepaid')}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm font-medium">Prepaid (Due at Start)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name={field.name} 
+                        value="postpaid" 
+                        checked={field.value === 'postpaid'}
+                        onChange={() => field.onChange('postpaid')}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm font-medium">Postpaid (Due at End)</span>
+                    </label>
+                  </div>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )} />

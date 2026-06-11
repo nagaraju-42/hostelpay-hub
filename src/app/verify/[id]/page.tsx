@@ -33,7 +33,8 @@ export default async function VerifyStatementPage({ params }: { params: Promise<
     payments,
     getTodayIST(),
     student.date_of_leaving,
-    manualCharges
+    manualCharges,
+    student.billing_type || 'prepaid'
   )
 
   const finalBalance = ledger.totalOwed > 0 ? ledger.totalOwed : (ledger.isAdvance ? -ledger.totalPaid + ledger.totalBilled : 0)

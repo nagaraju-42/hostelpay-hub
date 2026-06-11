@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
   // 1. Fetch ALL students (both active and inactive)
   const { data: students, error: studErr } = await supabase
     .from('students')
-    .select('id, full_name, phone, parent_phone, room_number, rent_amount, monthly_due_day, date_of_joining, is_active')
+    .select('id, full_name, phone, parent_phone, room_number, rent_amount, monthly_due_day, date_of_joining, is_active, billing_type')
     .eq('owner_id', user.id)
     .order('full_name')
 
@@ -72,7 +72,7 @@ export async function GET(_request: NextRequest) {
     const rent = Number(s.rent_amount)
     const dueDay = s.monthly_due_day
 
-    const ledger = calculateLedger(rent, dueDay, s.date_of_joining, studentPayments, today)
+    const ledger = calculateLedger(rent, dueDay, s.date_of_joining, studentPayments, today, null, undefined, s.billing_type || 'prepaid')
 
     // Last payment info
     const lastPayment = studentPayments.length > 0 ? studentPayments[0] : null
@@ -81,7 +81,7 @@ export async function GET(_request: NextRequest) {
       : null
 
     // Status
-    const status = getPaymentStatus(rent, dueDay, s.date_of_joining, studentPayments, today)
+    const status = getPaymentStatus(rent, dueDay, s.date_of_joining, studentPayments, today, null, undefined, s.billing_type || 'prepaid')
 
     return {
       id: s.id,

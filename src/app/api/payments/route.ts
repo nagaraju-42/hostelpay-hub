@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   // ── Verify student belongs to this owner (RLS + explicit check) ─────────
   const { data: student, error: studErr } = await supabase
     .from('students')
-    .select('id, owner_id, monthly_due_day, rent_amount, full_name, date_of_joining, date_of_leaving')
+    .select('id, owner_id, monthly_due_day, rent_amount, full_name, date_of_joining, date_of_leaving, billing_type')
     .eq('id', body.student_id)
     .eq('owner_id', user.id)
     .single()
@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
       studentWithHistory.payments,
       today,
       studentWithHistory.date_of_leaving,
-      studentWithHistory.manual_charges
+      studentWithHistory.manual_charges,
+      (studentWithHistory as any).billing_type || 'prepaid'
     )
     
     // Reverse to get the oldest unpaid cycle first

@@ -22,6 +22,7 @@ const editSchema = z.object({
   date_of_joining:  z.string().min(1, 'Date of joining is required.'),
   monthly_due_day:  z.string().refine(v => { const n = parseInt(v); return !isNaN(n) && n >= 1 && n <= 28 }, 'Must be 1-28.'),
   rent_amount:      z.string().refine(v => { const n = parseFloat(v); return !isNaN(n) && n > 0 }, 'Must be positive.'),
+  billing_type:     z.enum(['prepaid', 'postpaid']),
 })
  
 type EditFormValues = z.infer<typeof editSchema>
@@ -48,6 +49,7 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
       date_of_joining: student.date_of_joining ? new Date(student.date_of_joining).toISOString().split('T')[0] : '',
       monthly_due_day: student.monthly_due_day.toString(),
       rent_amount:     student.rent_amount.toString(),
+      billing_type:    student.billing_type || 'prepaid',
     }
   })
  
@@ -106,7 +108,7 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
             <div className='grid grid-cols-2 gap-3'>
               <FormField control={form.control} name='monthly_due_day' render={({ field }) => (
                 <FormItem><FormLabel>Due Day (1-28) *</FormLabel>
-                  <FormControl><Input type='number' min={1} max={28} {...field} className='h-11' /></FormControl>
+                  <FormControl><Input type='number' {...field} className='h-11' /></FormControl>
                   <FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name='rent_amount' render={({ field }) => (
@@ -115,6 +117,38 @@ export function EditStudentSheet({ student, open, onOpenChange, onSuccess }: Edi
                   <FormMessage /></FormItem>
               )} />
             </div>
+            <FormField control={form.control} name='billing_type' render={({ field }) => (
+              <FormItem>
+                <FormLabel>Billing Model *</FormLabel>
+                <FormControl>
+                  <div className="flex gap-4 p-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name={field.name} 
+                        value="prepaid" 
+                        checked={field.value === 'prepaid'}
+                        onChange={() => field.onChange('prepaid')}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm font-medium">Prepaid</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name={field.name} 
+                        value="postpaid" 
+                        checked={field.value === 'postpaid'}
+                        onChange={() => field.onChange('postpaid')}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm font-medium">Postpaid</span>
+                    </label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
             <FormField control={form.control} name='date_of_joining' render={({ field }) => (
               <FormItem><FormLabel>Date of Joining *</FormLabel>
                 <FormControl><Input type="date" {...field} className='h-11' /></FormControl>

@@ -51,6 +51,7 @@ export interface Student {
   monthly_due_day:    number         // 1-28 — the day of month rent is due
   rent_amount:        number         // INR
   is_active:          boolean
+  billing_type:       'prepaid' | 'postpaid' // Rent due at start (prepaid) or end (postpaid) of cycle
   approval_status:    'pending' | 'approved' | 'rejected'
   alternate_phone?:   string | null
   custom_password?:   string | null
@@ -104,6 +105,7 @@ export interface StudentFormData {
   date_of_joining:    string   // 'YYYY-MM-DD'
   monthly_due_day:    string   // string from form input — convert to number
   rent_amount:        string   // string from form input — convert to number
+  billing_type:       string   // 'prepaid' or 'postpaid'
 }
 
 // ── Student Join Form (for self-registration via QR/OTP) ──────────────────

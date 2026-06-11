@@ -1,5 +1,5 @@
 // Status badge component matching the reference design
-type BadgeType = 'green' | 'amber' | 'red' | 'blue' | 'purple'
+type BadgeType = 'green' | 'amber' | 'red' | 'blue' | 'purple' | 'gray'
 
 const BADGE_COLORS: Record<BadgeType, [string, string]> = {
   green:  ['#ECFDF5', '#065F46'],
@@ -7,6 +7,7 @@ const BADGE_COLORS: Record<BadgeType, [string, string]> = {
   red:    ['#FEF2F2', '#991B1B'],
   blue:   ['#E6F1FB', '#185FA5'],
   purple: ['#EDE9FE', '#5B21B6'],
+  gray:   ['#F1F5F9', '#475569'],
 }
 
 interface StatusBadgeProps {

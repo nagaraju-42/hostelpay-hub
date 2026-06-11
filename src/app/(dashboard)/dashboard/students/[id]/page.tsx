@@ -160,7 +160,8 @@ export default function StudentProfilePage() {
       student.payments,
       getTodayIST(),
       student.date_of_leaving,
-      student.manual_charges
+      student.manual_charges,
+      student.billing_type || 'prepaid'
     )
     await downloadStudentLedgerPDF(
       id,
@@ -169,7 +170,8 @@ export default function StudentProfilePage() {
       student.room_number,
       student.date_of_joining,
       student.rent_amount,
-      ledger
+      ledger,
+      student.billing_type || 'prepaid'
     )
   }
 
@@ -187,7 +189,8 @@ export default function StudentProfilePage() {
     student.payments,
     today,
     student.date_of_leaving,
-    student.manual_charges
+    student.manual_charges,
+    student.billing_type || 'prepaid'
   )
 
   const payStatus = getPaymentStatus(
@@ -197,7 +200,8 @@ export default function StudentProfilePage() {
     student.payments,
     today,
     student.date_of_leaving,
-    student.manual_charges
+    student.manual_charges,
+    student.billing_type || 'prepaid'
   )
   const badgeType = statusToBadgeType(payStatus)
   const badgeLbl  = statusLabel(payStatus)
@@ -259,7 +263,10 @@ export default function StudentProfilePage() {
             ) : student.approval_status === 'pending' ? (
               <StatusBadge label="Pending Approval" type="purple" />
             ) : (
-              <StatusBadge label={`Active · ${badgeLbl}`} type={badgeType} />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                <StatusBadge label={`Active · ${badgeLbl}`} type={badgeType} />
+                <StatusBadge label={student.billing_type === 'postpaid' ? 'Postpaid' : 'Prepaid'} type="gray" />
+              </div>
             )}
           </div>
         </div>

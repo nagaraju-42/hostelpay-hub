@@ -46,7 +46,10 @@ export default function RecordPaymentPage() {
           data.monthly_due_day, 
           data.date_of_joining, 
           data.payments,
-          getTodayIST()
+          getTodayIST(),
+          data.date_of_leaving,
+          data.manual_charges,
+          data.billing_type || 'prepaid'
         )
         setPendingMonths(pending)
         

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   const enriched = students.map(s => ({
     ...s,
-    payment_status: getPaymentStatus(Number(s.rent_amount), s.monthly_due_day, s.date_of_joining, paymentsByStudent.get(s.id) ?? [], today),
+    payment_status: getPaymentStatus(Number(s.rent_amount), s.monthly_due_day, s.date_of_joining, paymentsByStudent.get(s.id) ?? [], today, null, undefined, s.billing_type || 'prepaid'),
   }))
 
   return NextResponse.json<ApiSuccess<(Student & { payment_status: string })[]>>({ data: enriched })
@@ -150,6 +150,7 @@ export async function POST(request: NextRequest) {
       date_of_joining:   body.date_of_joining,
       monthly_due_day:   dueDay,
       rent_amount:       rent,
+      billing_type:      body.billing_type || 'prepaid',
       approval_status:   'approved',
     })
     .select()

@@ -18,6 +18,11 @@ export default function PendingDuesPage() {
   const [loading, setLoading]   = useState(true)
   const [tab, setTab]           = useState<Tab>('overdue')
   const [search, setSearch]     = useState('')
+  const [todayStr, setTodayStr] = useState('')
+
+  useEffect(() => {
+    setTodayStr(format(new Date(), 'EEE, d MMM yyyy'))
+  }, [])
 
   async function fetchDues() {
     setLoading(true)
@@ -86,7 +91,7 @@ export default function PendingDuesPage() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       <TopBar
         title="Pending Dues"
-        sub={format(new Date(), 'EEE, d MMM yyyy')}
+        sub={todayStr}
         backHref="/dashboard"
         right={<div style={{ fontSize: 18, color: '#1E293B' }}>≡</div>}
       />
@@ -159,6 +164,7 @@ export default function PendingDuesPage() {
           return (
             <button
               key={t.key}
+              suppressHydrationWarning
               onClick={() => setTab(t.key)}
               style={{
                 padding: '8px 16px', borderRadius: 20, border: 'none',
@@ -185,6 +191,7 @@ export default function PendingDuesPage() {
         }}>
           <span style={{ fontSize: 14, opacity: 0.5 }}>🔍</span>
           <input
+            suppressHydrationWarning
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search name, room, phone…"
@@ -317,6 +324,7 @@ export default function PendingDuesPage() {
                       display: 'flex', gap: 8, padding: '0 16px 16px',
                     }}>
                       <button
+                        suppressHydrationWarning
                         onClick={(e) => { e.stopPropagation(); openWhatsApp(s) }}
                         style={{
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -330,6 +338,7 @@ export default function PendingDuesPage() {
                       </button>
 
                       <button
+                        suppressHydrationWarning
                         onClick={(e) => { e.stopPropagation(); callPhone(s.phone) }}
                         style={{
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,

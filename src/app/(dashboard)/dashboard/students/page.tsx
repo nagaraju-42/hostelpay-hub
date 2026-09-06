@@ -42,13 +42,13 @@ function RoomCard({
       onClick={onClick}
       style={{
         background: '#fff',
-        border: `1px solid ${highlighted ? '#2563EB' : '#E2E8F0'}`,
-        borderRadius: 12,
+        border: `1px solid ${highlighted ? '#2563EB' : 'transparent'}`,
+        borderRadius: 16,
         padding: '16px 14px',
         cursor: 'pointer',
         boxShadow: highlighted
-          ? '0 0 0 3px rgba(37,99,235,0.12), 0 2px 8px rgba(0,0,0,0.06)'
-          : '0 1px 2px rgba(0,0,0,0.02)',
+          ? '0 0 0 3px rgba(37,99,235,0.12), 0 4px 12px rgba(0,0,0,0.08)'
+          : '0 2px 8px rgba(0,0,0,0.04)',
         transition: 'box-shadow 0.15s, border-color 0.15s',
         display: 'flex',
         flexDirection: 'column',
@@ -59,7 +59,7 @@ function RoomCard({
       {/* Room number */}
       <div
         style={{
-          fontSize: 20,
+          fontSize: 22,
           fontFamily: '"DM Sans", sans-serif',
           color: '#1E293B',
           lineHeight: 1,
@@ -71,28 +71,31 @@ function RoomCard({
       {/* Student count */}
       <div
         style={{
-          fontSize: 12,
-          color: '#10B981',
+          fontSize: 13,
+          color: '#64748B',
           fontFamily: '"DM Sans", sans-serif',
           fontWeight: 500,
         }}
       >
         {students.length} student{students.length !== 1 ? 's' : ''}
       </div>
-      {/* Status dot row */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-        {students.map((s) => (
+      {/* Stacked Avatars */}
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: 4 }}>
+        {students.map((s, i) => (
           <div
             key={s.id}
             title={`${s.full_name}: ${statusLabel(s.payment_status ?? 'upcoming')}`}
             style={{
-              width: 8,
-              height: 8,
+              marginLeft: i > 0 ? -8 : 0,
+              zIndex: 10 - i,
+              position: 'relative',
               borderRadius: '50%',
-              background: statusDotColor(s.payment_status),
-              flexShrink: 0,
+              border: '2px solid #fff',
+              boxShadow: '0 0 0 1px rgba(0,0,0,0.05)',
             }}
-          />
+          >
+            <MobileAvatar initials={initialsFromName(s.full_name)} color={colorFromName(s.full_name)} size={26} />
+          </div>
         ))}
       </div>
     </div>
@@ -355,26 +358,26 @@ export default function StudentsPage() {
       )}
 
       {/* Main content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px 80px', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px 80px', WebkitOverflowScrolling: 'touch', background: '#F8F9FA' }}>
 
         {/* ── GRID VIEW ── */}
         {view === 'grid' && (
           loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              {[...Array(9)].map((_, i) => (
-                <div key={i} style={{ height: 88, background: '#E2E8F0', borderRadius: 14 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {[...Array(8)].map((_, i) => (
+                <div key={i} style={{ height: 110, background: '#E2E8F0', borderRadius: 16 }} />
               ))}
             </div>
           ) : roomGroups.length === 0 ? (
             <div style={{
-              background: '#fff', borderRadius: 14, border: '1px dashed #E2E8F0',
+              background: '#fff', borderRadius: 16, border: '1px dashed #E2E8F0',
               padding: '32px 16px', textAlign: 'center',
               fontSize: 13, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif',
             }}>
               {search ? `No rooms match "${search}"` : 'No rooms yet. Add your first student!'}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               {roomGroups.map(([room, studs]) => (
                 <RoomCard
                   key={room}

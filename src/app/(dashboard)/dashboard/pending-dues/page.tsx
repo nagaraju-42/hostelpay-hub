@@ -77,11 +77,11 @@ export default function PendingDuesPage() {
     window.open(`tel:+91${cleanPhone}`, '_self')
   }
 
-  const TABS: { key: Tab; label: string; count: number; bg: string; activeBg: string; txt: string }[] = [
-    { key: 'overdue',   label: 'Overdue',   count: stats.overdue.length,  bg: '#FEF2F2', activeBg: '#EF4444', txt: '#EF4444' },
-    { key: 'due_today', label: 'Due Today', count: stats.dueToday.length, bg: '#FEF3C7', activeBg: '#F59E0B', txt: '#F59E0B' },
-    { key: 'upcoming',  label: 'Upcoming',  count: stats.upcoming.length, bg: '#EFF6FF', activeBg: '#2563EB', txt: '#2563EB' },
-    { key: 'paid',      label: 'Paid',      count: stats.paid.length,     bg: '#ECFDF5', activeBg: '#10B981', txt: '#10B981' },
+  const TABS: { key: Tab; label: string; count: number; bg: string; activeBg: string; activeTxt: string; txt: string }[] = [
+    { key: 'overdue',   label: 'Overdue',   count: stats.overdue.length,  bg: '#FEF2F2', activeBg: '#FDA4AF', activeTxt: '#881337', txt: '#EF4444' },
+    { key: 'due_today', label: 'Due Today', count: stats.dueToday.length, bg: '#FEF3C7', activeBg: '#FDE68A', activeTxt: '#1E293B', txt: '#F59E0B' },
+    { key: 'upcoming',  label: 'Upcoming',  count: stats.upcoming.length, bg: '#EFF6FF', activeBg: '#93C5FD', activeTxt: '#1E3A8A', txt: '#2563EB' },
+    { key: 'paid',      label: 'Paid',      count: stats.paid.length,     bg: '#ECFDF5', activeBg: '#6EE7B7', activeTxt: '#064E3B', txt: '#10B981' },
   ]
 
   const fmtMoney = (n: number) =>
@@ -169,7 +169,7 @@ export default function PendingDuesPage() {
               style={{
                 padding: '8px 16px', borderRadius: 20, border: 'none',
                 background: active ? t.activeBg : t.bg,
-                color: active ? '#fff' : t.txt,
+                color: active ? t.activeTxt : t.txt,
                 fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
                 fontFamily: '"DM Sans", sans-serif', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 4,
@@ -305,13 +305,13 @@ export default function PendingDuesPage() {
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{
                         fontSize: isPaid ? 18 : 20, fontWeight: 700,
-                        color: isPaid ? '#10B981' : '#EF4444',
+                        color: isPaid ? '#10B981' : '#1E293B',
                         fontFamily: '"DM Sans", sans-serif',
                       }}>
                         {isPaid ? '✅' : `₹${s.total_owed.toLocaleString('en-IN')}`}
                       </div>
                       {!isPaid && s.months_unpaid > 0 && (
-                        <div style={{ fontSize: 11, color: '#EF4444', fontFamily: '"DM Sans", sans-serif', marginTop: 2, fontWeight: 500 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', marginTop: 2, fontWeight: 500 }}>
                           {s.months_unpaid} month{s.months_unpaid > 1 ? 's' : ''}
                         </div>
                       )}

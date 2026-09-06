@@ -221,6 +221,14 @@ export default function StudentProfilePage() {
     ...(student.address ? [{ icon: '🏠', val: student.address }] : []),
   ]
 
+  function handleSendLedgerWhatsApp() {
+    if (!student) return
+    const msg = encodeURIComponent(
+      `Hi ${student.full_name},\n\nHere is your hostel statement:\nMonthly Rent: ₹${student.rent_amount.toLocaleString('en-IN')}\nPending Dues: ₹${ledgerSummary.totalOwed.toLocaleString('en-IN')}\nNext Due Date: ${nextDueStr}\n\nPlease clear any pending dues at the earliest.\n\nThank you.`
+    )
+    window.open(`https://wa.me/91${student.phone.replace(/\D/g, '')}?text=${msg}`, '_blank')
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       <TopBar
@@ -321,17 +329,32 @@ export default function StudentProfilePage() {
           </div>
 
           <button
-            onClick={handleDownloadLedger}
+            onClick={handleSendLedgerWhatsApp}
             style={{
-              background: '#0F2744', color: '#fff',
+              background: '#338F48', color: '#fff',
               border: 'none', padding: '14px', borderRadius: 12,
               fontSize: 14, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               minHeight: 50, marginTop: 4, width: '100%'
             }}
           >
-            📄 Download Ledger PDF
+            <span style={{ fontSize: 18 }}>💬</span> Send Ledger via WhatsApp
           </button>
+          
+          <div style={{ textAlign: 'center', marginTop: 4, marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>or </span>
+            <button
+              onClick={handleDownloadLedger}
+              style={{
+                background: 'none', border: 'none', color: '#0F2744',
+                fontSize: 13, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
+                cursor: 'pointer', padding: '4px 8px'
+              }}
+            >
+              Download as Ledger PDF
+            </button>
+          </div>
+
           {student.approval_status === 'pending' ? (
             <div style={{ background: '#F3E8FF', borderRadius: 14, border: '1px solid #D8B4FE', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#6B21A8', fontFamily: '"DM Sans", sans-serif' }}>
@@ -369,7 +392,7 @@ export default function StudentProfilePage() {
             </div>
           ) : (
             <>
-              {/* Action Buttons — 3 buttons */}
+              {/* Action Buttons */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             {/* Mark Paid */}
             <button
@@ -393,7 +416,7 @@ export default function StudentProfilePage() {
               <span style={{ fontSize: 18 }}>✏️</span>
               <span>Add Charge</span>
             </button>
-            {/* WhatsApp */}
+            {/* Message */}
             <button
               onClick={() => window.open(whatsappUrl, '_blank')}
               style={{
@@ -406,7 +429,7 @@ export default function StudentProfilePage() {
               }}
             >
               <span style={{ fontSize: 18 }}>💬</span>
-              <span>WhatsApp</span>
+              <span>Message</span>
             </button>
             {/* History */}
             <button

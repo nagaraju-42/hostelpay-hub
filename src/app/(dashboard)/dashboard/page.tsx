@@ -8,6 +8,7 @@ import { MobileAvatar, initialsFromName, colorFromName } from '@/components/mobi
 import { StatCard } from '@/components/mobile/StatCard'
 import { StatusBadge } from '@/components/mobile/StatusBadge'
 import { NotificationBell } from '@/components/mobile/NotificationBell'
+import { HamburgerDrawer } from '@/components/mobile/HamburgerDrawer'
 import type { DueTodayStudent } from '@/app/api/payments/due-today/route'
 import type { Payment } from '@/types'
 
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const router  = useRouter()
   const supabase = createClient()
 
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [hostelName, setHostelName]     = useState('My Hostel')
   const [ownerName,  setOwnerName]      = useState('')
   const [dueToday,   setDueToday]       = useState<DueTodayStudent[]>([])
@@ -102,7 +104,7 @@ export default function DashboardPage() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <div style={{ fontSize: 20, color: '#1E293B', cursor: 'pointer' }}>≡</div>
+        <div onClick={() => setDrawerOpen(true)} style={{ fontSize: 24, color: '#1E293B', cursor: 'pointer', padding: '0 8px' }}>≡</div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', fontWeight: 500 }}>
             {greeting}
@@ -288,6 +290,13 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      
+      <HamburgerDrawer 
+        open={drawerOpen} 
+        onOpenChange={setDrawerOpen} 
+        hostelName={hostelName} 
+        ownerName={ownerName || 'Owner'} 
+      />
     </div>
   )
 }

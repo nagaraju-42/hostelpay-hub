@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Student } from '@/types'
+import { PaymentCelebration } from '@/components/mobile/PaymentCelebration'
 
 const paymentSchema = z.object({
   amount: z.string().refine(v => { const n = parseFloat(v); return !isNaN(n) && n > 0 }, 'Must be positive.'),
@@ -30,6 +31,7 @@ interface RecordPaymentSheetProps {
 
 export function RecordPaymentSheet({ student, open, onOpenChange, onSuccess }: RecordPaymentSheetProps) {
   const [submitting, setSubmitting] = useState(false)
+  const [celebrationAmount, setCelebrationAmount] = useState<number | null>(null)
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
@@ -59,7 +61,7 @@ export function RecordPaymentSheet({ student, open, onOpenChange, onSuccess }: R
       if (!res.ok) { toast.error(data.error || 'Payment failed.'); return }
       toast.success('Payment recorded successfully.')
       form.reset()
-      onSuccess()
+      setCelebrationAmount(parseFloat(values.amount))
     } catch { toast.error('Network error.') }
     finally { setSubmitting(false) }
   }
@@ -106,6 +108,15 @@ export function RecordPaymentSheet({ student, open, onOpenChange, onSuccess }: R
           </form>
         </Form>
       </SheetContent>
+      {celebrationAmount !== null && (
+        <PaymentCelebration 
+          amount={celebrationAmount} 
+          onComplete={() => {
+            setCelebrationAmount(null)
+            onSuccess()
+          }} 
+        />
+      )}
     </Sheet>
   )
 }

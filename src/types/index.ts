@@ -46,7 +46,7 @@ export interface Student {
   room_number:        string
   age:                number | null
   address:            string | null
-  aadhaar_number:     string | null  // max 12 chars — never display in full
+  aadhaar_number:     string | null  // max 12 chars — shown in full to owners only, masked for students
   date_of_joining:    string         // ISO date string: '2025-05-12'
   monthly_due_day:    number         // 1-28 — the day of month rent is due
   rent_amount:        number         // INR

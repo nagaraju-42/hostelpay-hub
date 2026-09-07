@@ -12,17 +12,20 @@ interface FormData {
   room_number:     string
   phone:           string
   parent_phone:    string
+  emergency_contact: string
   date_of_joining: string
   rent_amount:     string
   monthly_due_day: string
   aadhaar_number:  string
   address:         string
+  billing_type:    'prepaid' | 'postpaid'
 }
 
 const EMPTY: FormData = {
   full_name: '', email: '', age: '', room_number: '',
-  phone: '', parent_phone: '', date_of_joining: '',
+  phone: '', parent_phone: '', emergency_contact: '', date_of_joining: '',
   rent_amount: '', monthly_due_day: '5', aadhaar_number: '', address: '',
+  billing_type: 'prepaid',
 }
 
 export default function AddStudentPage() {
@@ -90,17 +93,22 @@ export default function AddStudentPage() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       <TopBar title="Add new student" backHref="/dashboard/students" />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', WebkitOverflowScrolling: 'touch' as const }}>
+      <div style={{ padding: '20px 20px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: '"DM Sans", sans-serif' }}>Step {step} of 3</span>
+          <span style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>
+            {step === 1 ? 'Basic Info' : step === 2 ? 'Contact Details' : 'Review'}
+          </span>
+        </div>
+        <div style={{ height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden', display: 'flex' }}>
+          <div style={{ 
+            width: `${(step / 3) * 100}%`, background: '#2563EB', 
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
+          }} />
+        </div>
+      </div>
 
-        {/* Step indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-          {[1, 2, 3].map(n => (
-            <div key={n} style={{ flex: 1, height: 4, borderRadius: 2, background: n <= step ? '#0F2744' : '#E2E8F0', transition: 'background 0.2s' }} />
-          ))}
-        </div>
-        <div style={{ fontSize: 11, color: '#64748B', fontFamily: '"DM Sans", sans-serif', fontWeight: 600, marginBottom: 18, letterSpacing: '0.3px' }}>
-          STEP {step} OF 3 — {step === 1 ? 'BASIC INFO' : step === 2 ? 'CONTACT DETAILS' : 'PAYMENT SETUP'}
-        </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', WebkitOverflowScrolling: 'touch' as const }}>
 
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -126,10 +134,6 @@ export default function AddStudentPage() {
               <input type="tel" value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="9876543210" style={inputStyle(!!errors.phone)} />
               {errors.phone && <p style={errorStyle}>{errors.phone}</p>}
             </div>
-            <div>
-              <label style={labelStyle}>PARENT PHONE</label>
-              <input type="tel" value={form.parent_phone} onChange={e => update('parent_phone', e.target.value)} placeholder="9123456789" style={inputStyle(false)} />
-            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
               <div>
                 <label style={labelStyle}>JOIN DATE *</label>
@@ -140,6 +144,19 @@ export default function AddStudentPage() {
                 <label style={labelStyle}>MONTHLY RENT *</label>
                 <input type="number" value={form.rent_amount} onChange={e => update('rent_amount', e.target.value)} placeholder="7000" style={inputStyle(!!errors.rent_amount)} />
                 {errors.rent_amount && <p style={errorStyle}>{errors.rent_amount}</p>}
+              </div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1E293B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>Billing Type</label>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: 12, border: `1px solid ${form.billing_type === 'prepaid' ? '#2563EB' : '#E2E8F0'}`, borderRadius: 10, background: form.billing_type === 'prepaid' ? '#EFF6FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" name="billing_type" value="prepaid" checked={form.billing_type === 'prepaid'} onChange={(e) => update('billing_type', 'prepaid')} style={{ accentColor: '#2563EB' }} />
+                  <span style={{ fontSize: 13, fontWeight: 500, fontFamily: '"DM Sans", sans-serif' }}>Prepaid<br/><span style={{ fontSize: 10, color: '#64748B' }}>Due at start of month</span></span>
+                </label>
+                <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: 12, border: `1px solid ${form.billing_type === 'postpaid' ? '#2563EB' : '#E2E8F0'}`, borderRadius: 10, background: form.billing_type === 'postpaid' ? '#EFF6FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" name="billing_type" value="postpaid" checked={form.billing_type === 'postpaid'} onChange={(e) => update('billing_type', 'postpaid')} style={{ accentColor: '#2563EB' }} />
+                  <span style={{ fontSize: 13, fontWeight: 500, fontFamily: '"DM Sans", sans-serif' }}>Postpaid<br/><span style={{ fontSize: 10, color: '#64748B' }}>Due at end of month</span></span>
+                </label>
               </div>
             </div>
             <div>
@@ -168,12 +185,32 @@ export default function AddStudentPage() {
         {step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={labelStyle}>EMAIL <span style={{ fontWeight: 400, color: '#94A3B8' }}>(OPTIONAL — needed only for student login)</span></label>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, fontWeight: 600, color: '#1E293B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>
+                Parent Phone
+                <span style={{ fontSize: 10, background: '#F1F5F9', color: '#64748B', padding: '2px 6px', borderRadius: 6 }}>Optional</span>
+              </label>
+              <input type="tel" value={form.parent_phone} onChange={e => update('parent_phone', e.target.value)} placeholder="9123456789" style={inputStyle(false)} />
+            </div>
+            <div>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, fontWeight: 600, color: '#1E293B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>
+                Emergency Contact
+                <span style={{ fontSize: 10, background: '#F1F5F9', color: '#64748B', padding: '2px 6px', borderRadius: 6 }}>Optional</span>
+              </label>
+              <input type="tel" value={form.emergency_contact} onChange={e => update('emergency_contact', e.target.value)} placeholder="9123456789" style={inputStyle(false)} />
+            </div>
+            <div>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, fontWeight: 600, color: '#1E293B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>
+                Email
+                <span style={{ fontSize: 10, background: '#F1F5F9', color: '#64748B', padding: '2px 6px', borderRadius: 6 }}>Optional</span>
+              </label>
               <input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="ravi.teja@gmail.com" style={inputStyle(false)} />
               <p style={{ fontSize: 11, color: '#94A3B8', fontFamily: '"DM Sans", sans-serif', marginTop: 4 }}>Leave blank if student doesn't have or won't use the app.</p>
             </div>
             <div>
-              <label style={labelStyle}>ADDRESS (OPTIONAL)</label>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, fontWeight: 600, color: '#1E293B', marginBottom: 6, fontFamily: '"DM Sans", sans-serif' }}>
+                Address
+                <span style={{ fontSize: 10, background: '#F1F5F9', color: '#64748B', padding: '2px 6px', borderRadius: 6 }}>Optional</span>
+              </label>
               <textarea
                 value={form.address}
                 onChange={e => update('address', e.target.value)}
@@ -197,14 +234,33 @@ export default function AddStudentPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Review summary */}
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '16px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px', marginBottom: 12 }}>REVIEW DETAILS</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>BASIC INFO</div>
+                <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#2563EB', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif' }}>Edit</button>
+              </div>
               {[
                 ['Name',    form.full_name],
                 ['Room',    form.room_number],
                 ['Phone',   form.phone],
-                form.email ? ['Email', form.email] : null,
-                ['Rent',    `₹${form.rent_amount}/mo`],
+                ['Join Date', form.date_of_joining],
+                ['Rent',    `₹${form.rent_amount}/mo (${form.billing_type})`],
                 ['Due day', `${form.monthly_due_day}th of month`],
+              ].filter((x): x is string[] => x !== null).map(([lbl, val]) => (
+                <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>{lbl}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#1E293B', fontFamily: '"DM Sans", sans-serif' }}>{val || '—'}</span>
+                </div>
+              ))}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, marginTop: 24 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>CONTACT DETAILS</div>
+                <button onClick={() => setStep(2)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#2563EB', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif' }}>Edit</button>
+              </div>
+              {[
+                ['Parent Phone', form.parent_phone],
+                ['Emergency Contact', form.emergency_contact],
+                ['Email', form.email],
+                ['Address', form.address],
               ].filter((x): x is string[] => x !== null).map(([lbl, val]) => (
                 <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F1F5F9' }}>
                   <span style={{ fontSize: 12, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>{lbl}</span>

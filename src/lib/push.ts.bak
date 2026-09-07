@@ -1,0 +1,75 @@
+import webPush from 'web-push'
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@hostelpay.com'
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+}
+
+export interface PushPayload {
+  title: string
+  body: string
+  icon?: string
+  badge?: string
+  url?: string
+  tag?: string
+}
+
+export async function sendPushNotification(
+  subscription: webPush.PushSubscription,
+  payload: PushPayload
+) {
+  try {
+    await webPush.sendNotification(subscription, JSON.stringify(payload))
+    return { success: true }
+  } catch (error: any) {
+    if (error.statusCode === 410 || error.statusCode === 404) {
+      // Subscription expired or invalid — should be removed from DB
+      return { success: false, expired: true, error }
+    }
+    console.error('[Push] Failed to send:', error)
+    return { success: false, expired: false, error }
+  }
+}
+
+export async function sendPushToUser(userId: string, payload: PushPayload) {
+  // Dynamic import to avoid importing supabase at module level in edge cases
+  const { supabaseAdmin } = await import('@/lib/supabase/server')
+  
+  const { data: subscriptions } = await supabaseAdmin
+    .from('push_subscriptions')
+    .select('*')
+    .eq('user_id', userId)
+
+  if (!subscriptions || subscriptions.length === 0) return { sent: 0, failed: 0 }
+
+  let sent = 0
+  let failed = 0
+  const expiredIds: string[] = []
+
+  for (const sub of subscriptions) {
+    const pushSub: webPush.PushSubscription = {
+      endpoint: sub.endpoint,
+      keys: { p256dh: sub.p256dh, auth: sub.auth }
+    }
+    const result = await sendPushNotification(pushSub, payload)
+    if (result.success) {
+      sent++
+    } else {
+      failed++
+      if (result.expired) expiredIds.push(sub.id)
+    }
+  }
+
+  // Clean up expired subscriptions
+  if (expiredIds.length > 0) {
+    await supabaseAdmin
+      .from('push_subscriptions')
+      .delete()
+      .in('id', expiredIds)
+  }
+
+  return { sent, failed }
+}

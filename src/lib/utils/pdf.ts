@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import QRCode from 'qrcode'
 import type { LedgerTransaction } from './due-calc'
 
@@ -15,188 +14,126 @@ export async function downloadStudentLedgerPDF(
 ) {
   const doc = new jsPDF()
 
-  // Define colors
-  const primaryText = [15, 23, 42] as [number, number, number] // Slate 900
-  const secondaryText = [100, 116, 139] as [number, number, number] // Slate 500
+  // Colors
+  const primaryText = [15, 23, 42] as [number, number, number]
+  const secondaryText = [100, 116, 139] as [number, number, number]
   const emerald = [16, 185, 129] as [number, number, number]
   const rose = [225, 29, 72] as [number, number, number]
 
-  // Generate Unique Statement ID (e.g. STMT-20260602-A8F9)
-  const now = new Date()
-  const dateStr = now.getFullYear().toString() + 
-                  (now.getMonth() + 1).toString().padStart(2, '0') + 
-                  now.getDate().toString().padStart(2, '0')
-  const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase()
-  const statementId = `STMT-${dateStr}-${randomStr}`
+  const statementId = `STMT-${Date.now().toString().slice(-6)}`
 
-  // Generate QR Code for live verification
+  // Generate QR Code
   let qrDataUrl = ''
   try {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://hostelpay.com'
     const verifyUrl = `${baseUrl}/verify/${studentId}`
-    qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-      width: 70,
-      margin: 0,
-      color: { dark: primaryText.map(x => x.toString(16).padStart(2, '0')).join(''), light: '#FFFFFF' }
-    })
-  } catch (err) {
-    console.error('Failed to generate QR:', err)
-  }
+    qrDataUrl = await QRCode.toDataURL(verifyUrl, { width: 50, margin: 0 })
+  } catch (err) {}
 
-  // Top Header Area
+  // Header Box
+  doc.setDrawColor(primaryText[0], primaryText[1], primaryText[2])
+  doc.setLineWidth(0.5)
+  doc.rect(14, 15, 182, 30)
+
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(24)
+  doc.setFontSize(18)
   doc.setTextColor(primaryText[0], primaryText[1], primaryText[2])
-  doc.text(hostelName, 14, 25)
+  doc.text(hostelName, 105, 25, { align: 'center' })
+  doc.setFontSize(14)
+  doc.text('RENT STATEMENT', 105, 35, { align: 'center' })
+
+  // Student Info Box
+  doc.rect(14, 45, 182, 25)
+  doc.setFontSize(11)
+  doc.text(`Student: ${studentName}`, 18, 52)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Room: ${roomNumber}`, 18, 59)
+  doc.text(`Monthly Rent: Rs. ${rentAmount.toLocaleString('en-IN')}`, 18, 66)
 
   if (qrDataUrl) {
-    // Top-right corner
-    doc.addImage(qrDataUrl, 'PNG', 176, 12, 20, 20)
-    
-    // Move "STATEMENT OF ACCOUNT" and details slightly left
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2])
-    doc.text('STATEMENT OF ACCOUNT', 170, 18, { align: 'right' })
-    
-    doc.setFontSize(9)
-    doc.text(`Statement ID: ${statementId}`, 170, 23, { align: 'right' })
-    doc.text(`Generated: ${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN')}`, 170, 28, { align: 'right' })
-  } else {
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2])
-    doc.text('STATEMENT OF ACCOUNT', 196, 18, { align: 'right' })
-    
-    doc.setFontSize(9)
-    doc.text(`Statement ID: ${statementId}`, 196, 23, { align: 'right' })
-    doc.text(`Generated: ${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN')}`, 196, 28, { align: 'right' })
+    doc.addImage(qrDataUrl, 'PNG', 170, 48, 20, 20)
   }
 
-  // Divider Line
-  doc.setDrawColor(226, 232, 240) // Slate 200
-  doc.setLineWidth(0.5)
-  doc.line(14, 34, 196, 34)
-
-  // Student Details (Left side)
+  // Payment Summary
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
-  doc.setTextColor(primaryText[0], primaryText[1], primaryText[2])
-  doc.text(studentName, 14, 44)
+  doc.text('PAYMENT SUMMARY', 14, 85)
+  doc.line(14, 88, 196, 88)
+
+  let y = 95
+  doc.setFontSize(11)
+  
+  // Calculate totals
+  let totalPaid = 0
+  let totalDue = 0
+
+  // We loop through ledger and show rent assessments and payments nicely
+  for (const row of ledger) {
+    if (y > 270) {
+      doc.addPage()
+      y = 20
+    }
+    
+    if (row.particulars.includes('Rent Assessed') || row.charges !== null) {
+      doc.setTextColor(rose[0], rose[1], rose[2])
+      doc.text('❌', 14, y)
+      doc.setTextColor(primaryText[0], primaryText[1], primaryText[2])
+      doc.setFont('helvetica', 'bold')
+      doc.text(row.particulars.replace('Rent Assessed (', '').replace(')', ''), 25, y)
+      doc.text(`Rs. ${row.charges?.toLocaleString('en-IN')}`, 140, y)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2])
+      doc.text('UNPAID', 175, y)
+      totalDue += (row.charges || 0)
+    } 
+    else if (row.payments !== null) {
+      doc.setTextColor(emerald[0], emerald[1], emerald[2])
+      doc.text('✅', 14, y)
+      doc.setTextColor(primaryText[0], primaryText[1], primaryText[2])
+      doc.setFont('helvetica', 'normal')
+      doc.text(row.particulars, 25, y)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Rs. ${row.payments.toLocaleString('en-IN')}`, 140, y)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(emerald[0], emerald[1], emerald[2])
+      doc.text(`PAID on ${row.date}`, 175, y)
+      totalPaid += row.payments
+    } else {
+      continue // Skip Opening Balance etc.
+    }
+    y += 10
+  }
+
+  // Final totals box
+  y += 5
+  doc.setDrawColor(226, 232, 240)
+  doc.setFillColor(248, 250, 252)
+  doc.rect(14, y, 182, 25, 'FD')
   
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(10)
-  doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2])
-  doc.text(`Room: ${roomNumber}`, 14, 50)
-  doc.text(`Joined: ${new Date(joinDateString).toLocaleDateString('en-IN')}`, 14, 55)
-  doc.text(`Monthly Rent: Rs. ${rentAmount.toLocaleString('en-IN')} (${billingType === 'postpaid' ? 'Postpaid' : 'Prepaid'})`, 14, 60)
-
-  // Balance Summary (Right side box)
-  const finalBalanceRow = ledger[ledger.length - 1]
-  const finalBalance = finalBalanceRow ? finalBalanceRow.balance : 0
-  let statusText = ''
-  let statusVal = ''
-  let statusColor = secondaryText
-
-  if (finalBalance === 0) {
-    statusText = 'Account Settled'
-    statusVal = 'Rs. 0'
-    statusColor = emerald
-  } else if (finalBalance > 0) {
-    statusText = 'Amount Due'
-    statusVal = `Rs. ${finalBalance.toLocaleString('en-IN')}`
-    statusColor = rose
-  } else {
-    statusText = 'Paid in Advance'
-    statusVal = `Rs. ${Math.abs(finalBalance).toLocaleString('en-IN')}`
-    statusColor = emerald
-  }
-
-  // Draw Summary Box
-  doc.setFillColor(248, 250, 252) // Slate 50
-  doc.setDrawColor(226, 232, 240) // Slate 200
-  doc.roundedRect(120, 40, 76, 24, 3, 3, 'FD')
-
-  doc.setFontSize(10)
-  doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2])
-  doc.text('Current Balance', 125, 48)
-
+  doc.setTextColor(primaryText[0], primaryText[1], primaryText[2])
+  doc.text(`Total Paid:`, 18, y + 10)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(14)
-  doc.setTextColor(statusColor[0], statusColor[1], statusColor[2])
-  doc.text(statusVal, 190, 58, { align: 'right' })
+  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}`, 60, y + 10)
 
-  if (finalBalance !== 0) {
-    doc.setFontSize(9)
-    doc.text(statusText, 125, 58)
+  const finalBal = ledger[ledger.length - 1]?.balance || 0
+  
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Total Pending:`, 18, y + 18)
+  doc.setFont('helvetica', 'bold')
+  if (finalBal > 0) {
+    doc.setTextColor(rose[0], rose[1], rose[2])
+    doc.text(`Rs. ${finalBal.toLocaleString('en-IN')}`, 60, y + 18)
+  } else {
+    doc.setTextColor(emerald[0], emerald[1], emerald[2])
+    doc.text(`Rs. 0 (All clear)`, 60, y + 18)
   }
 
-  // Ledger Table
-  autoTable(doc, {
-    head: [['Date', 'Description', 'Charges', 'Payments', 'Balance']],
-    body: ledger.map(row => {
-      let balStr = `Rs. ${Math.abs(row.balance).toLocaleString('en-IN')}`
-      if (row.balance > 0) balStr += ' (Due)'
-      else if (row.balance < 0) balStr += ' (Adv)'
-      
-      return [
-        row.date,
-        row.particulars,
-        row.charges !== null ? `Rs. ${row.charges.toLocaleString('en-IN')}` : '',
-        row.payments !== null ? `Rs. ${row.payments.toLocaleString('en-IN')}` : '',
-        balStr
-      ]
-    }),
-    startY: 74,
-    styles: { 
-      fontSize: 9, 
-      cellPadding: 6,
-      font: 'helvetica',
-      textColor: [51, 65, 85]
-    },
-    headStyles: { 
-      fillColor: [241, 245, 249], 
-      textColor: [71, 85, 105], 
-      fontStyle: 'bold',
-      lineColor: [226, 232, 240],
-      lineWidth: { bottom: 0.5, top: 0, left: 0, right: 0 }
-    },
-    bodyStyles: {
-      lineColor: [241, 245, 249],
-      lineWidth: { bottom: 0.5, top: 0, left: 0, right: 0 }
-    },
-    alternateRowStyles: { 
-      fillColor: [255, 255, 255] 
-    },
-    columnStyles: {
-      0: { cellWidth: 26 },
-      1: { cellWidth: 'auto' },
-      2: { halign: 'right', textColor: rose },
-      3: { halign: 'right', textColor: emerald },
-      4: { halign: 'right', fontStyle: 'bold', textColor: primaryText }
-    },
-    margin: { left: 14, right: 14 }
-  })
-
-  // Footer (Pagination)
-  const pageCount = (doc as any).internal.getNumberOfPages()
+  // Footer
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(148, 163, 184)
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i)
-    doc.text(
-      `Page ${i} of ${pageCount}`, 
-      doc.internal.pageSize.getWidth() / 2, 
-      doc.internal.pageSize.getHeight() - 10, 
-      { align: 'center' }
-    )
-    
-    // Bottom left footer security note
-    doc.setFontSize(7)
-    doc.setTextColor(148, 163, 184)
-    doc.text(`Ref: ${statementId} — generated securely by HostelPay Hub`, 14, doc.internal.pageSize.getHeight() - 10)
-  }
+  doc.text(`Ref: ${statementId} — generated securely by HostelPay Hub`, 105, 290, { align: 'center' })
 
   doc.save(`${studentName.replace(/\s+/g, '_')}_Statement.pdf`)
 }

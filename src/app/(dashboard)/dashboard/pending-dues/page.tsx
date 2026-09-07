@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { TopBar } from '@/components/mobile/TopBar'
 import { MobileAvatar, initialsFromName, colorFromName } from '@/components/mobile/MobileAvatar'
+import { HamburgerDrawer } from '@/components/mobile/HamburgerDrawer'
 import type { PendingDueStudent } from '@/app/api/payments/pending-dues/route'
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +20,7 @@ export default function PendingDuesPage() {
   const [tab, setTab]           = useState<Tab>('overdue')
   const [search, setSearch]     = useState('')
   const [todayStr, setTodayStr] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     setTodayStr(format(new Date(), 'EEE, d MMM yyyy'))
@@ -93,7 +95,7 @@ export default function PendingDuesPage() {
         title="Pending Dues"
         sub={todayStr}
         backHref="/dashboard"
-        right={<div style={{ fontSize: 18, color: '#1E293B' }}>≡</div>}
+        right={<div onClick={() => setDrawerOpen(true)} style={{ fontSize: 24, color: '#1E293B', cursor: 'pointer', padding: '0 8px' }}>≡</div>}
       />
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', WebkitOverflowScrolling: 'touch' }}>
@@ -386,7 +388,13 @@ export default function PendingDuesPage() {
           </div>
         )}
       </div>
-    </div>
+
+      <HamburgerDrawer 
+        open={drawerOpen} 
+        onOpenChange={setDrawerOpen} 
+        hostelName="Hostel" 
+        ownerName="Admin" 
+      />
     </div>
   )
 }

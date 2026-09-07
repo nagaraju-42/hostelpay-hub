@@ -11,8 +11,9 @@ import { EditStudentSheet } from '@/components/students/EditStudentSheet'
 import { AddManualChargeSheet } from '@/components/students/AddManualChargeSheet'
 import { RecordPaymentSheet } from '@/components/students/RecordPaymentSheet'
 import { PaymentDetailsSheet } from '@/components/students/PaymentDetailsSheet'
+import { WhatsAppChooser } from '@/components/mobile/WhatsAppChooser'
 import type { StudentWithPayments } from '@/types'
-import { generateStudentLedger, getTodayIST, getPaymentStatus, getNextDueDate, calculateLedger } from '@/lib/utils/due-calc'
+import { generateStudentLedger, getTodayIST, getPaymentStatus, getNextDueDate, calculateLedger, getPendingMonths } from '@/lib/utils/due-calc'
 import { downloadStudentLedgerPDF } from '@/lib/utils/pdf'
 import type { Payment } from '@/types'
 
@@ -66,6 +67,32 @@ export default function StudentProfilePage() {
   const [showPaymentSheet, setShowPaymentSheet] = useState(false)
   const [selectedPayment,  setSelectedPayment]  = useState<Payment | null>(null)
   const [showPaymentDetails, setShowPaymentDetails] = useState(false)
+  const [showWhatsAppChooser, setShowWhatsAppChooser] = useState(false)
+  const [payingMonth, setPayingMonth] = useState<string | null>(null)
+
+  async function handleQuickPay(monthName: string, amount: number) {
+    if (!confirm(`Mark ₹${amount} for ${monthName} as paid (Cash)?`)) return
+    
+    setPayingMonth(monthName)
+    const res = await fetch('/api/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        student_id: id,
+        amount_paid: amount,
+        payment_mode: 'cash',
+        notes: `Paid for: ${monthName}`
+      })
+    })
+    
+    if (res.ok) {
+      toast.success('Payment recorded successfully! 🎉')
+      fetchStudent()
+    } else {
+      toast.error('Failed to record payment.')
+    }
+    setPayingMonth(null)
+  }
 
   async function fetchStudent() {
     const res = await fetch(`/api/students/${id}`)
@@ -79,18 +106,39 @@ export default function StudentProfilePage() {
 
   async function handleDeactivate() {
     const defaultDate = new Date().toISOString().split('T')[0]
+    // We'll use a simple prompt for the date for now
     const dateStr = prompt(`Enter the date ${student?.full_name} left the hostel (YYYY-MM-DD):`, defaultDate)
-    if (dateStr === null) return // user cancelled
+    if (dateStr === null) return
     const finalDate = dateStr.trim() || defaultDate
 
     setDeactivating(true)
     const res = await fetch(`/api/students/${id}?date_of_leaving=${finalDate}`, { method: 'DELETE' })
     if (res.ok) {
-      toast.success('Student marked as Left Hostel.')
-      router.push('/dashboard/students')
+      toast.success(`${student?.full_name} marked as Left Hostel`, {
+        duration: 10000,
+        action: {
+          label: '↩ Undo',
+          onClick: () => handleReactivate(),
+        },
+      })
+      fetchStudent() // Refresh to show updated status
     } else {
       toast.error('Failed to update student status.')
-      setDeactivating(false)
+    }
+    setDeactivating(false)
+  }
+
+  async function handleReactivate() {
+    const res = await fetch(`/api/students/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: true, date_of_leaving: null }),
+    })
+    if (res.ok) {
+      toast.success(`${student?.full_name} reactivated successfully! 🎉`)
+      fetchStudent()
+    } else {
+      toast.error('Failed to reactivate student.')
     }
   }
 
@@ -217,16 +265,38 @@ export default function StudentProfilePage() {
     { icon: '📱', val: student.phone, copyable: true },
     ...(student.parent_phone ? [{ icon: '👤', val: `Parent: ${student.parent_phone}` }] : []),
     { icon: '📧', val: student.email },
-    ...(student.aadhaar_number ? [{ icon: '🪪', val: `Aadhar: XXXX XXXX ${student.aadhaar_number.slice(-4)}` }] : []),
+    ...(student.aadhaar_number ? [{ icon: '🪪', val: `Aadhaar: ${student.aadhaar_number.replace(/(\d{4})/g, '$1 ').trim()}`, copyable: true }] : []),
     ...(student.address ? [{ icon: '🏠', val: student.address }] : []),
   ]
 
-  function handleSendLedgerWhatsApp() {
+  function handleWhatsAppSelect(action: string) {
     if (!student) return
-    const msg = encodeURIComponent(
-      `Hi ${student.full_name},\n\nHere is your hostel statement:\nMonthly Rent: ₹${student.rent_amount.toLocaleString('en-IN')}\nPending Dues: ₹${ledgerSummary.totalOwed.toLocaleString('en-IN')}\nNext Due Date: ${nextDueStr}\n\nPlease clear any pending dues at the earliest.\n\nThank you.`
-    )
-    window.open(`https://wa.me/91${student.phone.replace(/\D/g, '')}?text=${msg}`, '_blank')
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://hostelpay.com'
+    const qrLink = `${baseUrl}/qr/${student.owner_id}`
+    let msg = ''
+    let targetPhone = student.phone.replace(/\D/g, '')
+
+    if (action === 'reminder') {
+      msg = `Hi ${student.full_name}, your hostel rent of ₹${student.rent_amount} is pending. Please arrange payment at the earliest. - your hostel`
+    } else if (action === 'qr') {
+      msg = `Hi ${student.full_name}, your hostel rent is pending. You can pay securely using this QR link: ${qrLink} \nRoom: ${student.room_number}. Thank you!`
+    } else if (action === 'receipt') {
+      const lastPayment = student.payments[0]
+      if (!lastPayment) {
+        toast.error('No recent payments found.')
+        return
+      }
+      msg = `Hi ${student.full_name}, ✅ Payment received! ₹${lastPayment.amount_paid} for ${lastPayment.notes?.replace('Paid for: ', '') || 'rent'} (${lastPayment.payment_mode}). Thank you!`
+    } else if (action === 'statement') {
+      msg = `Hi ${student.full_name},\n\nHere is your hostel statement:\nMonthly Rent: ₹${student.rent_amount}\nPending Dues: ₹${ledgerSummary.totalOwed}\nNext Due Date: ${nextDueStr}\n\nPlease clear any pending dues at the earliest.\n\nThank you.`
+    } else if (action === 'parent') {
+      if (!student.parent_phone) return
+      targetPhone = student.parent_phone.replace(/\D/g, '')
+      msg = `Dear Parent, this is a reminder that the hostel rent for ${student.full_name} (Room ${student.room_number}) of ₹${ledgerSummary.totalOwed} is pending. Kindly ensure payment at the earliest. Thank you.`
+    }
+
+    setShowWhatsAppChooser(false)
+    window.open(`https://wa.me/91${targetPhone}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   return (
@@ -328,21 +398,7 @@ export default function StudentProfilePage() {
             ))}
           </div>
 
-          <button
-            onClick={handleSendLedgerWhatsApp}
-            style={{
-              background: '#338F48', color: '#fff',
-              border: 'none', padding: '14px', borderRadius: 12,
-              fontSize: 14, fontWeight: 700, fontFamily: '"DM Sans", sans-serif',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              minHeight: 50, marginTop: 4, width: '100%'
-            }}
-          >
-            <span style={{ fontSize: 18 }}>💬</span> Send Ledger via WhatsApp
-          </button>
-          
           <div style={{ textAlign: 'center', marginTop: 4, marginBottom: 8 }}>
-            <span style={{ fontSize: 13, color: '#64748B', fontFamily: '"DM Sans", sans-serif' }}>or </span>
             <button
               onClick={handleDownloadLedger}
               style={{
@@ -392,61 +448,87 @@ export default function StudentProfilePage() {
             </div>
           ) : (
             <>
-              {/* Action Buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            {/* Mark Paid */}
-            <button
-              onClick={() => setShowPaymentSheet(true)}
-              style={{ flex: 1, padding: 12, background: '#0F2744', color: '#fff', borderRadius: 12, border: 'none', fontWeight: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-            >
-              <div style={{ fontSize: 18 }}>✅</div>
-              <div style={{ fontSize: 12 }}>Mark Paid</div>
-            </button>
-            {/* Add Charge */}
-            <button
-              onClick={() => setShowChargeSheet(true)}
-              style={{
-                background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA',
-                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 4, flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>✏️</span>
-              <span>Add Charge</span>
-            </button>
-            {/* Message */}
-            <button
-              onClick={() => window.open(whatsappUrl, '_blank')}
-              style={{
-                background: '#ECFDF5', color: '#065F46',
-                border: '1px solid #A7F3D0',
-                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 4, flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>💬</span>
-              <span>Message</span>
-            </button>
-            {/* History */}
-            <button
-              onClick={() => router.push(`/dashboard/history`)}
-              style={{
-                background: '#F8FAFC', color: '#334155',
-                border: '1px solid #E2E8F0',
-                borderRadius: 12, padding: '13px 6px', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
-                minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 4, flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>📋</span>
-              <span>History</span>
-            </button>
+              {/* Pending Months Section */}
+<div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px', marginBottom: 12 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+    <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.5px' }}>
+      PENDING MONTHS
+    </div>
+    {ledgerSummary.totalOwed > 0 && (
+      <button 
+        onClick={() => setShowPaymentSheet(true)}
+        style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        Custom Pay ▶
+      </button>
+    )}
+  </div>
+
+  {ledgerSummary.totalOwed === 0 ? (
+    <div style={{ background: '#ECFDF5', borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontSize: 20 }}>✅</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: '#065F46', fontFamily: '"DM Sans", sans-serif' }}>All Caught Up!</span>
+    </div>
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {getPendingMonths(
+        student.rent_amount, student.monthly_due_day, student.date_of_joining, student.payments,
+        getTodayIST(), student.date_of_leaving, student.manual_charges, student.billing_type
+      ).map((m, idx) => {
+        const isOverdue = m.cycleDue < today
+        const borderColor = isOverdue ? '#EF4444' : '#F59E0B'
+        
+        return (
+          <div key={idx} style={{ 
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0', borderLeft: `4px solid ${borderColor}`,
+            padding: '12px',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12 }}>{isOverdue ? '🔴' : '🟡'}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#0F2744', fontFamily: '"DM Sans", sans-serif' }}>{m.monthName}</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4, fontFamily: '"DM Sans", sans-serif' }}>
+                {isOverdue ? 'Overdue' : 'Due soon'}
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F2744', fontFamily: '"DM Serif Display", serif' }}>
+                ₹{m.amountOwed.toLocaleString('en-IN')}
+              </div>
+              <button
+                onClick={() => handleQuickPay(m.monthName, m.amountOwed)}
+                disabled={payingMonth === m.monthName}
+                style={{
+                  background: '#0F2744', color: '#fff', border: 'none', borderRadius: 8,
+                  padding: '6px 12px', fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                  cursor: 'pointer', opacity: payingMonth === m.monthName ? 0.7 : 1
+                }}
+              >
+                {payingMonth === m.monthName ? '...' : 'Pay ▶'}
+              </button>
+            </div>
           </div>
+        )
+      })}
+    </div>
+  )}
+</div>
+
+{/* Remaining Action Buttons (Add Charge, Message, History) */}
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+  <button onClick={() => setShowChargeSheet(true)} style={{ background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA', borderRadius: 12, padding: '10px 6px', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexDirection: 'column' }}>
+    <span style={{ fontSize: 18 }}>✏️</span><span>Add Charge</span>
+  </button>
+  <button onClick={() => setShowWhatsAppChooser(true)} style={{ background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', borderRadius: 12, padding: '10px 6px', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexDirection: 'column' }}>
+    <span style={{ fontSize: 18 }}>💬</span><span>Message</span>
+  </button>
+  <button onClick={() => router.push(`/dashboard/history`)} style={{ background: '#F8FAFC', color: '#334155', border: '1px solid #E2E8F0', borderRadius: 12, padding: '10px 6px', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: '"DM Sans", sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexDirection: 'column' }}>
+    <span style={{ fontSize: 18 }}>📋</span><span>History</span>
+  </button>
+</div>
 
           {/* Recent Payments */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px' }}>
@@ -498,7 +580,7 @@ export default function StudentProfilePage() {
           </div>
 
           {/* Leave Hostel Zone */}
-          {student.is_active && (
+          {student.is_active ? (
             <div style={{ background: '#FEF2F2', borderRadius: 14, border: '1px solid #FECACA', padding: '14px 16px', marginBottom: 8 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>
                 LEFT HOSTEL
@@ -518,6 +600,27 @@ export default function StudentProfilePage() {
                 }}
               >
                 {deactivating ? 'Updating…' : '🚪 Mark as Left Hostel'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: '#FEF3C7', borderRadius: 14, border: '1px solid #FDE68A', padding: '14px 16px', marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#92400E', fontFamily: '"DM Sans", sans-serif', marginBottom: 4 }}>
+                STUDENT LEFT HOSTEL
+              </div>
+              <p style={{ fontSize: 11, color: '#92400E', fontFamily: '"DM Sans", sans-serif', marginBottom: 10 }}>
+                This student was marked as left on {student.date_of_leaving ? format(new Date(student.date_of_leaving), 'd MMM yyyy') : 'Unknown date'}. You can reactivate them if this was done by mistake.
+              </p>
+              <button
+                onClick={handleReactivate}
+                style={{
+                  background: '#0F2744', color: '#fff', border: 'none',
+                  borderRadius: 10, padding: '10px 16px',
+                  fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                🔄 Reactivate Student
               </button>
             </div>
           )}
@@ -550,6 +653,14 @@ export default function StudentProfilePage() {
         payment={selectedPayment}
         open={showPaymentDetails}
         onOpenChange={setShowPaymentDetails}
+      />
+
+      <WhatsAppChooser
+        open={showWhatsAppChooser}
+        onOpenChange={setShowWhatsAppChooser}
+        studentName={student.full_name}
+        parentPhone={student.parent_phone}
+        onSelect={handleWhatsAppSelect}
       />
     </div>
   )

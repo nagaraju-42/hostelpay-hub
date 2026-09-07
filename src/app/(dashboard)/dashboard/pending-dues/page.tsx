@@ -389,6 +389,8 @@ export default function PendingDuesPage() {
         )}
       </div>
 
+      </div>
+
       <HamburgerDrawer 
         open={drawerOpen} 
         onOpenChange={setDrawerOpen} 
